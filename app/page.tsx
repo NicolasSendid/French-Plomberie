@@ -61,20 +61,20 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-[#FBFBFA] pb-20 font-sans text-slate-900 antialiased">
       
-      {/* Header Minimaliste - Hauteur fixe et basse */}
+      {/* HEADER CORRIGÉ - TAILLE LOGO FORCÉE */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100 px-6 h-16 flex items-center">
         <div className="max-w-4xl mx-auto w-full flex justify-between items-center">
           
           <div className="flex items-center gap-4">
-            {/* LOGO BRIDÉ À 32PX */}
-            <div className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+            {/* On force la boîte à 32px par 32px quoi qu'il arrive */}
+            <div style={{ width: '32px', height: '32px', position: 'relative' }} className="flex-shrink-0 overflow-hidden rounded-md bg-slate-50 flex items-center justify-center border border-slate-100">
               <img 
                 src="/logo.png" 
                 alt="Logo" 
-                className="max-w-full max-h-full object-contain"
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 onError={(e) => (e.currentTarget.style.display = 'none')} 
               />
-              <Droplets className="text-blue-500 absolute" size={14} />
+              <Droplets className="text-blue-500 absolute" size={14} style={{ zIndex: -1 }} />
             </div>
             <span className="font-bold text-sm tracking-widest uppercase">French<span className="text-blue-600">.</span></span>
           </div>
@@ -86,18 +86,16 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Contenu - Largeur maîtrisée pour PC et Mobile */}
+      {/* Contenu - Largeur maîtrisée */}
       <div className="max-w-[400px] mx-auto px-6 mt-12 space-y-12">
         
-        {/* Hero discret */}
-        <section className="space-y-2">
+        <section className="space-y-2 text-center md:text-left">
           <h2 className="text-2xl font-extrabold tracking-tight text-slate-900">Demande d'intervention.</h2>
           <p className="text-slate-500 text-xs leading-relaxed font-medium">Réponse immédiate • Devis gratuit sur place</p>
         </section>
 
-        {/* Services - Liste compacte au lieu de gros blocs */}
         <section className="space-y-4">
-          <h3 className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Service requis</h3>
+          <h3 className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] ml-1">Service requis</h3>
           <div className="grid grid-cols-2 gap-3">
             {prestationsList.map((p) => {
               const active = formData.prestations.includes(p.id);
@@ -121,44 +119,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Formulaire "Flush" (très plat) */}
         <section className="space-y-6">
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <input required placeholder="Prénom" className="w-full p-3.5 bg-white rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all outline-none text-[13px]" 
                 value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} />
-              <input required placeholder="Nom" className="w-full p-3.5 bg-white rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all outline-none text-[13px]" 
-                value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} />
-            </div>
-
-            <input required type="tel" placeholder="Téléphone" className="w-full p-3.5 bg-white rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all outline-none text-[13px]" 
-              value={formData.tel} onChange={e => setFormData({...formData, tel: e.target.value})} />
-
-            <div className="relative">
-              <input required placeholder="Adresse d'intervention" className="w-full p-3.5 bg-white rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-1 focus:ring-blue-100 transition-all outline-none pr-12 text-[13px]" 
-                value={formData.adresse} onChange={e => setFormData({...formData, adresse: e.target.value})} />
-              <button type="button" onClick={getGPS} className="absolute right-3 top-3.5 text-slate-400 hover:text-blue-600">
-                <MapPin size={18} strokeWidth={2}/>
-              </button>
-            </div>
-          </div>
-
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" required checked={formData.rgpd} onChange={e => setFormData({...formData, rgpd: e.target.checked})} 
-              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-400" />
-            <span className="text-[10px] text-slate-400 font-medium">J'accepte le traitement des données (RGPD)</span>
-          </label>
-
-          <button type="submit" className="w-full bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-[12px] tracking-widest uppercase">
-            <Send size={14} strokeWidth={2.5} /> Envoyer
-          </button>
-        </section>
-
-        {/* Footer Signature */}
-        <footer className="text-center pt-8 border-t border-slate-100">
-          <p className="text-slate-300 text-[10px] font-bold tracking-[0.4em] uppercase">Artisan Qualifié • 2024</p>
-        </footer>
-      </div>
-    </main>
-  );
-}
+              <input required placeholder="Nom" className="w-full p-3.5 bg-white rounded-xl border border-slate-200 focus:border-blue-400 focus:ring-
