@@ -1,23 +1,24 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
 export const metadata: Metadata = {
-  title: "French Plomberie - Dépannage & Installation",
-  description: "Installation de salle de bains, cuisine et dépannage d'urgence 24/7",
-  themeColor: "#2563eb",
+  title: "French Plomberie",
+  description: "Urgence et dépannage plomberie 7j/7",
+  manifest: "/manifest.ts",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="fr">
-      <body className={inter.className}>{children}</body>
+      <head>
+        <meta name="theme-color" content="#2563eb" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+      </head>
+      <body>{children}</body>
     </html>
   );
 }
