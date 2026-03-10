@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { Phone, Droplets, Flame, Bath, Utensils, Send, MapPin, Download, CheckCircle2 } from 'lucide-react';
+import { Phone, Droplets, Flame, Bath, Utensils, Send, MapPin, Check, Plus } from 'lucide-react';
 
 export default function Home() {
   const [formData, setFormData] = useState({
@@ -27,10 +27,10 @@ export default function Home() {
   };
 
   const prestationsList = [
-    { id: 'Eau Chaude', icon: <Droplets size={28} />, desc: 'Ballon & Chauffe-eau' },
-    { id: 'Chauffage', icon: <Flame size={28} />, desc: 'Radiateur & Chaudière' },
-    { id: 'Salle de bains', icon: <Bath size={28} />, desc: 'Douche & Robinetterie' },
-    { id: 'Cuisine', icon: <Utensils size={28} />, desc: 'Évier & Lave-vaisselle' },
+    { id: 'Eau Chaude', icon: <Droplets size={22} />, desc: 'Systèmes de chauffe' },
+    { id: 'Chauffage', icon: <Flame size={22} />, desc: 'Solutions thermiques' },
+    { id: 'Salle de bains', icon: <Bath size={22} />, desc: 'Aménagement & Sanitaires' },
+    { id: 'Cuisine', icon: <Utensils size={22} />, desc: 'Réseaux & Équipements' },
   ];
 
   const togglePrestation = (id: string) => {
@@ -46,14 +46,14 @@ export default function Home() {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition((pos) => {
         setFormData(prev => ({...prev, gps: `${pos.coords.latitude}, ${pos.coords.longitude}`}));
-        alert("📍 Position récupérée avec succès !");
+        alert("📍 Coordonnées GPS synchronisées.");
       });
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if(!formData.rgpd) return alert("Veuillez accepter les conditions (RGPD)");
+    if(!formData.rgpd) return alert("Veuillez valider le traitement des données.");
     
     const res = await fetch('/api/send', {
       method: 'POST',
@@ -62,54 +62,63 @@ export default function Home() {
     });
     
     if(res.ok) {
-      alert("🚀 Demande envoyée ! Nous vous rappelons rapidement.");
+      alert("✅ Demande reçue. Nous vous recontactons dans les plus brefs délais.");
       setFormData({ nom: '', prenom: '', tel: '', mail: '', adresse: '', prestations: [], rgpd: false, gps: '' });
     }
   };
 
   return (
-    <main className="min-h-screen bg-[#F8FAFC] pb-12 font-sans text-slate-900">
-      {/* Banner Installation PWA */}
+    <main className="min-h-screen bg-[#FDFDFC] pb-20 font-sans text-slate-800 antialiased">
+      {/* Banner Installation PWA Subtile */}
       {deferredPrompt && (
-        <div className="bg-blue-600 p-2 text-white text-center text-sm font-medium flex items-center justify-center gap-3 animate-pulse">
-          <span>Installer l'application sur votre écran ?</span>
-          <button onClick={handleInstallClick} className="bg-white text-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase">Installer</button>
+        <div className="bg-slate-900 px-6 py-2.5 text-white/90 text-center text-[13px] font-medium flex items-center justify-center gap-4 tracking-wide">
+          <span>Accédez plus rapidement à nos services depuis votre écran.</span>
+          <button onClick={handleInstallClick} className="bg-white/10 hover:bg-white/20 text-white px-4 py-1.5 rounded-full font-bold uppercase text-[11px] transition-colors active:scale-95">Installer</button>
         </div>
       )}
 
-      {/* Header Glassmorphism */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-5 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          {/* LOGO ICI */}
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-blue-200">
-            <img src="/logo.png" alt="Logo" className="w-full h-full object-cover" onError={(e) => (e.currentTarget.style.display = 'none')} />
-            <Droplets className="text-white absolute" size={20} /> 
+      {/* Header Raffiné & Centré */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-100/60 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            {/* LOGO ICI (public/logo.png) */}
+            <div className="w-11 h-11 bg-[#F5F5F3] rounded-2xl flex items-center justify-center overflow-hidden border border-slate-100/80 group">
+              <img src="/logo.png" alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onError={(e) => (e.currentTarget.style.display = 'none')} />
+              <Droplets className="text-slate-400 absolute" size={18} strokeWidth={1.5} /> 
+            </div>
+            <div>
+              <h1 className="font-extrabold text-xl leading-none tracking-tighter text-slate-900">French<span className="text-blue-600">.</span></h1>
+              <p className="text-[11px] text-slate-400 font-medium uppercase tracking-widest mt-0.5">Plomberie d'excellence</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-black text-lg leading-tight tracking-tighter text-slate-800">FRENCH<br/><span className="text-blue-600">PLOMBERIE</span></h1>
-          </div>
+          <a href="tel:0658908674" className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-full flex items-center gap-2.5 font-bold transition-all active:scale-95 shadow-md shadow-blue-100 text-[13px] tracking-wide">
+            <Phone size={17} strokeWidth={2.5} />
+            <span>URGENCE 24/7</span>
+          </a>
         </div>
-        <a href="tel:0658908674" className="group bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-2xl flex items-center gap-2 font-bold transition-all active:scale-95 shadow-lg shadow-red-200">
-          <Phone size={18} className="group-hover:animate-bounce" />
-          <span className="hidden sm:inline">URGENCE 24/7</span>
-        </a>
       </header>
 
-      <div className="max-w-xl mx-auto px-5 pt-8 space-y-10">
-        {/* Hero Section */}
-        <section className="text-center space-y-3">
-          <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">Services Professionnels</span>
-          <h2 className="text-3xl font-black text-slate-900 leading-tight">Dépannage Rapide & <br/>Installation de Qualité</h2>
-          <p className="text-slate-500 text-sm">Intervention sous 1h pour toutes vos urgences plomberie et chauffage.</p>
+      {/* Colonne centrale principale */}
+      <div className="max-w-lg mx-auto px-6 mt-16 space-y-16">
+        
+        {/* Hero Section Fine */}
+        <section className="text-center space-y-4">
+          <div className="inline-flex items-center gap-2 bg-[#F5F5F3] border border-slate-100 text-slate-600 px-4 py-1.5 rounded-full text-xs font-semibold tracking-wide">
+            <Droplets size={14} className="text-blue-600" /> Dépannage & Installation
+          </div>
+          <h2 className="text-4xl font-extrabold text-slate-950 leading-tight tracking-tighter">Votre confort,<br/>notre priorité.</h2>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">Artisan qualifié pour interventions rapides et de haute qualité sur tous vos réseaux d'eau et chauffage.</p>
         </section>
 
-        {/* Services Grid */}
-        <section>
-          <div className="flex justify-between items-end mb-6">
-            <h3 className="text-lg font-bold">Choisissez un service</h3>
-            <span className="text-xs text-slate-400 font-medium">{formData.prestations.length} sélectionné(s)</span>
+        {/* Services Fine Grid */}
+        <section className="space-y-6">
+          <div className="flex justify-between items-baseline">
+            <h3 className="text-xs text-slate-400 font-bold uppercase tracking-widest ml-1">Prestations</h3>
+            {formData.prestations.length > 0 && (
+              <span className="text-xs text-blue-600 font-bold px-3 py-1 bg-blue-50 rounded-full animate-in fade-in zoom-in">{formData.prestations.length} sélectionné(s)</span>
+            )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-5">
             {prestationsList.map((p) => {
               const active = formData.prestations.includes(p.id);
               return (
@@ -117,79 +126,79 @@ export default function Home() {
                   key={p.id} 
                   type="button"
                   onClick={() => togglePrestation(p.id)}
-                  className={`relative p-5 rounded-3xl border-2 transition-all duration-300 flex flex-col items-start text-left gap-4 overflow-hidden group ${
-                    active ? 'border-blue-600 bg-blue-50/50 ring-4 ring-blue-50' : 'bg-white border-slate-100 hover:border-blue-200'
+                  className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col items-start text-left gap-4 group ${
+                    active ? 'border-blue-600 bg-blue-50/20 ring-1 ring-blue-100' : 'bg-white/80 border-slate-100/70 hover:border-blue-200'
                   }`}
                 >
-                  <div className={`p-3 rounded-2xl transition-colors ${active ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400 group-hover:bg-blue-100'}`}>
+                  <div className={`p-3 rounded-xl transition-colors ${active ? 'bg-blue-600 text-white' : 'bg-[#F5F5F3] text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600'}`}>
                     {p.icon}
                   </div>
                   <div>
-                    <p className="font-bold text-sm leading-tight">{p.id}</p>
-                    <p className="text-[10px] text-slate-400 mt-1 uppercase font-semibold tracking-wide">{p.desc}</p>
+                    <p className="font-bold text-sm tracking-tight text-slate-900">{p.id}</p>
+                    <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed font-medium">{p.desc}</p>
                   </div>
-                  {active && <CheckCircle2 size={20} className="absolute top-4 right-4 text-blue-600 animate-in fade-in zoom-in" />}
+                  <div className={`absolute top-4 right-4 transition-all duration-300 ${active ? 'bg-blue-600 text-white p-1 rounded-full' : 'text-slate-300 group-hover:text-blue-400'}`}>
+                    {active ? <Check size={16} strokeWidth={3} /> : <Plus size={20} />}
+                  </div>
                 </button>
               );
             })}
           </div>
         </section>
 
-        {/* Form Card */}
-        <section className="bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100 relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
-          <h3 className="text-2xl font-black mb-8 text-slate-800">Prendre rendez-vous</h3>
+        {/* Premium Form Card */}
+        <section className="bg-white/90 p-10 rounded-[2.5rem] shadow-xl shadow-slate-100/50 border border-slate-100/70 relative">
+          <h3 className="text-2xl font-extrabold mb-10 text-slate-950 tracking-tight">Planifier une intervention</h3>
           
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Prénom</label>
-                <input required placeholder="Jean" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-600 transition-all outline-none text-sm" 
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-5">
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Prénom</label>
+                <input required placeholder="Jean" className="w-full p-4 bg-[#F5F5F3] rounded-xl border border-transparent focus:ring-1 focus:ring-blue-600/50 focus:border-blue-300 focus:bg-white transition-all outline-none text-[13px]" 
                   value={formData.prenom} onChange={e => setFormData({...formData, prenom: e.target.value})} />
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Nom</label>
-                <input required placeholder="Dupont" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-600 transition-all outline-none text-sm" 
+              <div className="space-y-2">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Nom</label>
+                <input required placeholder="Dupont" className="w-full p-4 bg-[#F5F5F3] rounded-xl border border-transparent focus:ring-1 focus:ring-blue-600/50 focus:border-blue-300 focus:bg-white transition-all outline-none text-[13px]" 
                   value={formData.nom} onChange={e => setFormData({...formData, nom: e.target.value})} />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Téléphone</label>
-              <input required type="tel" placeholder="06 00 00 00 00" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-600 transition-all outline-none text-sm" 
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Téléphone</label>
+              <input required type="tel" placeholder="06 00 00 00 00" className="w-full p-4 bg-[#F5F5F3] rounded-xl border border-transparent focus:ring-1 focus:ring-blue-600/50 focus:border-blue-300 focus:bg-white transition-all outline-none text-[13px]" 
                 value={formData.tel} onChange={e => setFormData({...formData, tel: e.target.value})} />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-400 uppercase ml-1">Adresse d'intervention</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">Lieu d'intervention</label>
               <div className="relative group">
-                <input required placeholder="12 rue des Fleurs, 75000" className="w-full p-4 bg-slate-50 rounded-2xl border-none focus:ring-2 focus:ring-blue-600 transition-all outline-none pr-14 text-sm" 
+                <input required placeholder="12 rue des Fleurs, 75000" className="w-full p-4 bg-[#F5F5F3] rounded-xl border border-transparent focus:ring-1 focus:ring-blue-600/50 focus:border-blue-300 focus:bg-white transition-all outline-none pr-14 text-[13px]" 
                   value={formData.adresse} onChange={e => setFormData({...formData, adresse: e.target.value})} />
-                <button type="button" onClick={getGPS} className="absolute right-2 top-2 p-2.5 bg-white shadow-sm rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
-                  <MapPin size={22}/>
+                <button type="button" onClick={getGPS} className="absolute right-2.5 top-2.5 p-2 bg-white shadow rounded-lg text-slate-400 hover:text-blue-600 transition-all hover:shadow-md active:scale-90">
+                  <MapPin size={20} strokeWidth={1.5}/>
                 </button>
               </div>
             </div>
 
-            <label className="flex items-start gap-4 p-4 rounded-2xl bg-slate-50/50 cursor-pointer group">
-              <div className="relative flex items-center">
-                <input type="checkbox" required checked={formData.rgpd} onChange={e => setFormData({...formData, rgpd: e.target.checked})} 
-                  className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
-              </div>
-              <span className="text-[11px] leading-relaxed text-slate-500 group-hover:text-slate-700 transition-colors">
-                En cochant cette case, j'accepte que mes données soient utilisées pour la prise de contact liée à ma demande.
+            <label className="flex items-start gap-4 p-5 rounded-xl bg-[#F5F5F3]/60 cursor-pointer group border border-transparent hover:border-slate-100 transition-colors">
+              <input type="checkbox" required checked={formData.rgpd} onChange={e => setFormData({...formData, rgpd: e.target.checked})} 
+                className="w-4 h-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-all" />
+              <span className="text-[11px] leading-relaxed text-slate-500 transition-colors">
+                Je consens au traitement de mes informations personnelles pour la prise de contact liée à ma demande de rendez-vous (RGPD).
               </span>
             </label>
 
-            <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-5 rounded-2xl shadow-xl shadow-blue-200 transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-sm tracking-wide uppercase">
-              <Send size={18} /> Confirmer la demande
+            <button type="submit" className="w-full bg-slate-900 hover:bg-slate-950 text-white font-bold py-5 rounded-2xl shadow-xl shadow-slate-200/60 transition-all active:scale-[0.98] flex items-center justify-center gap-3 text-xs tracking-widest uppercase mt-6 group">
+              <Send size={16} strokeWidth={2} className="group-hover:translate-x-0.5 transition-transform" /> Confirmer la demande
             </button>
           </form>
         </section>
 
-        {/* Footer */}
-        <footer className="text-center space-y-4">
-          <p className="text-slate-400 text-[10px] font-medium tracking-widest uppercase">French Plomberie © 2024 • Qualité Garantie</p>
+        {/* Fine Footer */}
+        <footer className="text-center pt-8 border-t border-slate-100/60">
+          <p className="text-slate-400 text-[11px] font-bold tracking-widest uppercase">French Plomberie © 2024</p>
+          <p className="text-[10px] text-slate-300 mt-1.5">Artisan qualifié RGE • Interventions garanties</p>
         </footer>
       </div>
     </main>
