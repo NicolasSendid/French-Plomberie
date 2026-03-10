@@ -27,7 +27,7 @@ export default function Home() {
   };
 
   const prestationsList = [
-    { id: 'Eau Chaude', icon: <Droplets size={32} /> },
+    { id: 'Ballon et chaudiere', icon: <Droplets size={32} /> },
     { id: 'Chauffage', icon: <Flame size={32} /> },
     { id: 'Salle de bains', icon: <Bath size={32} /> },
     { id: 'Cuisine', icon: <Utensils size={32} /> },
