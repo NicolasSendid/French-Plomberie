@@ -11,13 +11,13 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#2563eb', // Le bleu de ton header
     icons: [
       {
-        src: '/public/logo.png',
+        src: '/logo.png',
         sizes: '192x192',
         type: 'image/png',
         purpose: 'maskable',
       },
       {
-        src: '/public/logo.png',
+        src: '/logo.png',
         sizes: '512x512',
         type: 'image/png',
       },
