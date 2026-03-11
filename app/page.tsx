@@ -129,7 +129,7 @@ Photos : ${photos.length}`;
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
-      <h1 style={{ textAlign: "center" }}>Vos projets avec votre Artisan Plombier de proximité</h1>
+      <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
       <p style={{ textAlign: "center", color: "#555" }}>
         Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
       </p>
