@@ -50,21 +50,21 @@ export default function Home() {
       return;
     }
 
-const data = {
-  prenom: formData.get("prenom"),
-  nom: formData.get("nom"),
-  tel: formData.get("tel"),
-  email: formData.get("email"),
-  adresse: formData.get("adresse"),
-  prestation,
-  message: formData.get("message"),
-  rgpd: formData.get("rgpd")
-};
+    const formData = new FormData(e.target);
+    formData.append("prestation", prestation);
+    if (location) {
+      formData.append("latitude", location.lat.toString());
+      formData.append("longitude", location.lng.toString());
+    }
+    formData.append("photosCount", photos.length.toString());
 
-const response = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", {
-  method: "POST",
-  body: JSON.stringify(data)
-});
+    photos.forEach((photo) => formData.append("photos", photo));
+
+    try {
+      const response = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", { // Remplace par ton URL Apps Script
+        method: "POST",
+        body: formData,
+      });
 
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
