@@ -4,12 +4,12 @@ import { useState } from "react";
 
 export default function Home() {
 
-const [status, setStatus] = useState("");
-const [prestation, setPrestation] = useState("");
-const [photos, setPhotos] = useState<File[]>([]);
-const [location, setLocation] = useState<{lat:number,lng:number} | null>(null);
+const [status,setStatus] = useState("");
+const [prestation,setPrestation] = useState("");
+const [photos,setPhotos] = useState<File[]>([]);
+const [location,setLocation] = useState<{lat:number,lng:number}|null>(null);
 
-function handlePhotos(e: React.ChangeEvent<HTMLInputElement>) {
+function handlePhotos(e:React.ChangeEvent<HTMLInputElement>){
 
 if(!e.target.files) return;
 
@@ -28,7 +28,6 @@ navigator.geolocation.getCurrentPosition(
 setLocation({
 
 lat:pos.coords.latitude,
-
 lng:pos.coords.longitude
 
 });
@@ -41,13 +40,39 @@ lng:pos.coords.longitude
 
 }
 
-async function handleSubmit(e: React.FormEvent<HTMLFormElement>){
+async function handleSubmit(e:React.FormEvent<HTMLFormElement>){
 
 e.preventDefault();
 
 const form = e.currentTarget;
 
 const formData = new FormData(form);
+
+photos.forEach((photo)=>{
+
+formData.append("photos",photo);
+
+});
+
+if(location){
+
+formData.append("latitude",location.lat.toString());
+formData.append("longitude",location.lng.toString());
+
+}
+
+formData.append("prestation",prestation);
+
+/* envoi vers route.ts (email + photos) */
+
+const res = await fetch("/api/send",{
+
+method:"POST",
+body:formData
+
+});
+
+/* préparation JSON pour Google Sheets */
 
 const data = {
 
@@ -58,24 +83,20 @@ email:formData.get("email"),
 adresse:formData.get("adresse"),
 prestation:prestation,
 message:formData.get("message"),
-rgpd:formData.get("rgpd") ? true : false,
-latitude:location?.lat || "",
-longitude:location?.lng || ""
+rgpd:formData.get("rgpd") ? true : false
 
 };
 
-try{
+/* envoi Google Sheets */
 
-const res = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec",{
+await fetch("TON_URL_APPS_SCRIPT",{
 
 method:"POST",
 body:JSON.stringify(data)
 
 });
 
-if(res.ok){
-
-setStatus("Demande envoyée");
+/* WhatsApp */
 
 const whatsappMessage = `Nouvelle demande plomberie
 
@@ -90,12 +111,20 @@ Prestation : ${data.prestation}
 Message :
 ${data.message}
 
-${location ? `https://www.google.com/maps?q=${location.lat},${location.lng}` : ""}`;
+${location ? `https://www.google.com/maps?q=${location.lat},${location.lng}` : ""}
+
+`;
 
 window.open(
+
 `https://wa.me/33658908674?text=${encodeURIComponent(whatsappMessage)}`,
 "_blank"
+
 );
+
+if(res.ok){
+
+setStatus("Demande envoyée");
 
 form.reset();
 setPhotos([]);
@@ -108,23 +137,48 @@ setStatus("Erreur lors de l'envoi");
 
 }
 
-}catch{
-
-setStatus("Erreur lors de l'envoi");
-
 }
 
-}
-
-return (
+return(
 
 <div style={{maxWidth:700,margin:"auto",padding:30,fontFamily:"Arial"}}>
 
+<div style={{textAlign:"center"}}>
+
+<img src="/logo.png" style={{width:140}} />
+
+</div>
+
 <h1 style={{textAlign:"center"}}>
 
-Artisan Plombier de proximité
+Plombier disponible rapidement
 
 </h1>
+
+<div style={{textAlign:"center",marginBottom:20}}>
+
+<a
+
+href="tel:0658908674"
+
+style={{
+
+background:"red",
+color:"white",
+padding:"12px 20px",
+borderRadius:8,
+textDecoration:"none",
+fontWeight:"bold"
+
+}}
+
+>
+
+📞 Appeler maintenant
+
+</a>
+
+</div>
 
 <form onSubmit={handleSubmit}>
 
@@ -136,70 +190,96 @@ Artisan Plombier de proximité
 
 <input name="email" placeholder="Email" />
 
-<input name="adresse" placeholder="Adresse" required />
+<input name="adresse" placeholder="Adresse intervention" required />
 
 <h3>Prestation</h3>
 
 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
 
 <button type="button" onClick={()=>setPrestation("Dépannage fuite")}>
+
 🔧 Dépannage fuite
+
 </button>
 
 <button type="button" onClick={()=>setPrestation("Chauffage / ballon")}>
+
 🔥 Chauffage / ballon
+
 </button>
 
 <button type="button" onClick={()=>setPrestation("Cuisine")}>
+
 🍳 Cuisine
+
 </button>
 
 <button type="button" onClick={()=>setPrestation("Salle de bain")}>
+
 🛁 Salle de bain
+
 </button>
 
 </div>
 
-<h3>Photos (max 3)</h3>
+<h3 style={{marginTop:20}}>Photos (max 3)</h3>
 
 <input
+
 type="file"
 accept="image/*"
 multiple
 onChange={handlePhotos}
+
 />
 
 <button
+
 type="button"
 onClick={getLocation}
 style={{marginTop:10}}
+
 >
 
-Ajouter ma position
+📍 Ajouter ma position
 
 </button>
 
 <textarea
+
 name="message"
 placeholder="Décrivez votre problème"
 style={{width:"100%",marginTop:20}}
-/>
 
-<div style={{marginTop:20}}>
+></textarea>
+
+<div style={{marginTop:15,fontSize:14}}>
 
 <label>
 
 <input type="checkbox" name="rgpd" required />
 
- J'accepte l'utilisation de mes données pour le traitement de ma demande.
+ J'accepte l'utilisation de mes données pour traiter ma demande.
 
 </label>
 
 </div>
 
 <button
+
 type="submit"
-style={{marginTop:20,padding:12,width:"100%"}}
+style={{
+
+marginTop:20,
+width:"100%",
+padding:14,
+background:"black",
+color:"white",
+border:"none",
+borderRadius:6
+
+}}
+
 >
 
 Envoyer la demande
