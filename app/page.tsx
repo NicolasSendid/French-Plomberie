@@ -73,7 +73,9 @@ export default function Home() {
 🚰 Nouvelle demande plomberie
 
 👤 Client : ${formData.get("prenom")} ${formData.get("nom")}
+
 📞 Téléphone : ${formData.get("tel")}
+
 📍 Adresse : ${formData.get("adresse")}
 
 🔧 Prestation : ${prestation}
