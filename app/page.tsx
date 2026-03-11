@@ -143,7 +143,7 @@ Plombier disponible rapidement
 </h1>
 
 <p style={{textAlign:"center",color:"#555"}}>
-Dépannage • Chauffage • Cuisine • Salle de bain
+Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
 </p>
 
 <form onSubmit={handleSubmit} style={{
@@ -181,7 +181,7 @@ border:prestation==="depannage"?"2px solid #0070f3":"1px solid #ccc"
 </button>
 
 <button type="button"
-onClick={()=>setPrestation("chauffage")}
+onClick={()=>setPrestation("chauffage / ballon ECS")}
 style={{
 padding:"15px",
 borderRadius:"8px",
