@@ -61,7 +61,7 @@ export default function Home() {
     photos.forEach((photo) => formData.append("photos", photo));
 
     try {
-      const response = await fetch("TON_URL_APPS_SCRIPT", { // Remplace par ton URL Apps Script
+      const response = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", { // Remplace par ton URL Apps Script
         method: "POST",
         body: formData,
       });
