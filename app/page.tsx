@@ -197,6 +197,14 @@ Photos : ${photos.length}`;
           style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }}
         />
 
+{/* RGPD / Consentement */}
+<div style={{ marginTop: 15, fontSize: 14 }}>
+  <label>
+    <input type="checkbox" name="rgpd" required style={{ marginRight: 8 }} />
+    Je confirme avoir lu et accepté que mes données soient utilisées pour le traitement de ma demande conformément à la réglementation RGPD.
+  </label>
+</div>
+        
         <button
           type="submit"
           style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white", border: "none", borderRadius: 6 }}
