@@ -69,9 +69,22 @@ export default function Home() {
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
         window.open(
-          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${formData.get("prenom")} ${formData.get("nom")}\nTel: ${formData.get("tel")}\nAdresse: ${formData.get("adresse")}\nPrestation: ${prestation}\nMessage: ${formData.get("message")}\nPhotos: ${photos.length}`,
-          "_blank"
-        );
+`https://wa.me/33658908674?text=
+🚰 Nouvelle demande plomberie
+
+👤 Client : ${formData.get("prenom")} ${formData.get("nom")}
+📞 Téléphone : ${formData.get("tel")}
+📍 Adresse : ${formData.get("adresse")}
+
+🔧 Prestation : ${prestation}
+
+💬 Message :
+${formData.get("message")}
+
+📷 Photos : ${photos.length}
+`,
+"_blank"
+);
 
         const newHistory = [
           ...history,
