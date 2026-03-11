@@ -95,10 +95,44 @@ if(response.ok){
 
 setStatus("✅ Demande envoyée !");
 
-  window.open(
-"https://wa.me/33658908674?text=Nouvelle demande plomberie",
+/* récupération des champs du formulaire */
+
+const prenom = formData.get("prenom");
+const nom = formData.get("nom");
+const tel = formData.get("tel");
+const adresse = formData.get("adresse");
+const messageClient = formData.get("message");
+
+/* lien google maps si position */
+
+let mapLink = "";
+
+if(location){
+mapLink = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
+}
+
+/* message whatsapp */
+
+const message = `
+Nouvelle demande plomberie
+
+Nom : ${prenom} ${nom}
+Téléphone : ${tel}
+Prestation : ${prestation}
+Adresse : ${adresse}
+
+Message :
+${messageClient}
+
+${mapLink ? "Localisation : " + mapLink : ""}
+`;
+
+window.open(
+`https://wa.me/33658908674?text=${encodeURIComponent(message)}`,
 "_blank"
 );
+
+/* historique */
 
 const newHistory=[...history,{
 date:new Date().toLocaleString(),
@@ -160,8 +194,6 @@ borderRadius:"10px"
 <input name="email" placeholder="Email" />
 <input name="adresse" placeholder="Adresse intervention" required />
 
-{/* PRESTATIONS */}
-
 <h3 style={{marginTop:"20px"}}>Prestation</h3>
 
 <div style={{
@@ -212,8 +244,6 @@ border:prestation==="sdb"?"2px solid #0070f3":"1px solid #ccc"
 
 </div>
 
-{/* PHOTOS */}
-
 <h3 style={{marginTop:"20px"}}>Photos du problème</h3>
 
 <input
@@ -249,8 +279,6 @@ borderRadius:"6px"
 </div>
 
 )}
-
-{/* GEOLOCALISATION */}
 
 <button
 type="button"
@@ -303,8 +331,6 @@ Envoyer la demande
 {status}
 </p>
 
-{/* HISTORIQUE */}
-
 {history.length>0 &&(
 
 <div style={{marginTop:"40px"}}>
@@ -323,8 +349,6 @@ borderBottom:"1px solid #ddd"
 </div>
 
 )}
-
-{/* BOUTON URGENCE */}
 
 <a
 href="tel:0658908674"
