@@ -103,7 +103,7 @@ to:email,
 subject:"Votre demande plomberie a bien été reçue",
 
 text:`
-Bonjour ${prenom},
+Bonjour ${prenom} ${nom},
 
 Merci pour votre demande.
 
@@ -111,7 +111,7 @@ Nous avons bien reçu votre message concernant :
 
 ${prestation}
 
-Un plombier vous contactera très rapidement.
+Nous vous contacterons très rapidement.
 
 French Plomberie
 📞 06 58 90 86 74
