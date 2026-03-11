@@ -10,7 +10,6 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstall, setShowInstall] = useState(false);
 
-  // Historique + PWA install
   useEffect(() => {
     const stored = localStorage.getItem("demandes");
     if (stored) setHistory(JSON.parse(stored));
@@ -28,7 +27,6 @@ export default function Home() {
     await deferredPrompt.userChoice;
   };
 
-  // Géolocalisation
   const getLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -36,13 +34,11 @@ export default function Home() {
     );
   };
 
-  // Photos (limite 3)
   const handlePhotos = (e: any) => {
-    const files = Array.from(e.target.files).slice(0, 3);
+    const files = Array.from(e.target.files).slice(0, 3); // max 3 photos
     setPhotos(files);
   };
 
-  // Envoi formulaire
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!prestation) {
@@ -50,44 +46,32 @@ export default function Home() {
       return;
     }
 
-    // FormData pour Google Sheet (texte uniquement)
-    const formData = new FormData();
-    formData.append("prenom", e.target.prenom.value);
-    formData.append("nom", e.target.nom.value);
-    formData.append("tel", e.target.tel.value);
-    formData.append("email", e.target.email.value);
-    formData.append("adresse", e.target.adresse.value);
+    const formData = new FormData(e.target);
     formData.append("prestation", prestation);
-    formData.append("message", e.target.message.value);
-    formData.append("rgpd", e.target.rgpd.checked ? "Oui" : "Non");
     if (location) {
       formData.append("latitude", location.lat.toString());
       formData.append("longitude", location.lng.toString());
     }
+    photos.forEach((photo) => formData.append("photos", photo));
 
     try {
-      const response = await fetch(
-        "https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", // ton URL Apps Script
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch("/api/route", {
+        method: "POST",
+        body: formData,
+      });
 
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
 
-        // WhatsApp
-        window.open(
-          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${formData.get(
-            "prenom"
-          )} ${formData.get("nom")}\nTel: ${formData.get(
-            "tel"
-          )}\nAdresse: ${formData.get("adresse")}\nPrestation: ${prestation}\nMessage: ${formData.get(
-            "message"
-          )}\nPhotos: ${photos.length}`,
-          "_blank"
-        );
+        // Message WhatsApp
+        const waText = `Nouvelle demande
+Nom: ${formData.get("prenom")} ${formData.get("nom")}
+Tel: ${formData.get("tel")}
+Adresse: ${formData.get("adresse")}
+Prestation: ${prestation}
+Message: ${formData.get("message")}
+Photos: ${photos.length}`;
+        window.open(`https://wa.me/33658908674?text=${encodeURIComponent(waText)}`, "_blank");
 
         const newHistory = [...history, { date: new Date().toLocaleString(), prestation }];
         setHistory(newHistory);
@@ -98,6 +82,8 @@ export default function Home() {
         setPrestation("");
         setLocation(null);
       } else {
+        const data = await response.json();
+        console.error(data);
         setStatus("❌ Erreur lors de l'envoi");
       }
     } catch (err) {
@@ -113,9 +99,7 @@ export default function Home() {
       </div>
 
       <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
-      <p style={{ textAlign: "center", color: "#555" }}>
-        Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
-      </p>
+      <p style={{ textAlign: "center", color: "#555" }}>Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain</p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
         <h2>Vos informations</h2>
@@ -127,50 +111,10 @@ export default function Home() {
 
         <h3 style={{ marginTop: 20 }}>Prestation</h3>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <button
-            type="button"
-            onClick={() => setPrestation("Dépannage fuite")}
-            style={{
-              padding: 15,
-              borderRadius: 8,
-              border: prestation === "Dépannage fuite" ? "2px solid #0070f3" : "1px solid #ccc",
-            }}
-          >
-            🔧 Dépannage fuite
-          </button>
-          <button
-            type="button"
-            onClick={() => setPrestation("Chauffage / Ballon ECS")}
-            style={{
-              padding: 15,
-              borderRadius: 8,
-              border: prestation === "Chauffage / Ballon ECS" ? "2px solid #0070f3" : "1px solid #ccc",
-            }}
-          >
-            🔥 Chauffage / Ballon ECS
-          </button>
-          <button
-            type="button"
-            onClick={() => setPrestation("Cuisine")}
-            style={{
-              padding: 15,
-              borderRadius: 8,
-              border: prestation === "Cuisine" ? "2px solid #0070f3" : "1px solid #ccc",
-            }}
-          >
-            🍳 Cuisine
-          </button>
-          <button
-            type="button"
-            onClick={() => setPrestation("Salle de bain")}
-            style={{
-              padding: 15,
-              borderRadius: 8,
-              border: prestation === "Salle de bain" ? "2px solid #0070f3" : "1px solid #ccc",
-            }}
-          >
-            🛁 Salle de bain
-          </button>
+          <button type="button" onClick={() => setPrestation("Dépannage fuite")} style={{ padding: 15, borderRadius: 8, border: prestation === "Dépannage fuite" ? "2px solid #0070f3" : "1px solid #ccc" }}>🔧 Dépannage fuite</button>
+          <button type="button" onClick={() => setPrestation("Chauffage / Ballon ECS")} style={{ padding: 15, borderRadius: 8, border: prestation === "Chauffage / Ballon ECS" ? "2px solid #0070f3" : "1px solid #ccc" }}>🔥 Chauffage / Ballon ECS</button>
+          <button type="button" onClick={() => setPrestation("Cuisine")} style={{ padding: 15, borderRadius: 8, border: prestation === "Cuisine" ? "2px solid #0070f3" : "1px solid #ccc" }}>🍳 Cuisine</button>
+          <button type="button" onClick={() => setPrestation("Salle de bain")} style={{ padding: 15, borderRadius: 8, border: prestation === "Salle de bain" ? "2px solid #0070f3" : "1px solid #ccc" }}>🛁 Salle de bain</button>
         </div>
 
         <h3 style={{ marginTop: 20 }}>Photos du problème (max 3)</h3>
@@ -178,45 +122,24 @@ export default function Home() {
         {photos.length > 0 && (
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             {photos.map((photo, i) => (
-              <img
-                key={i}
-                src={URL.createObjectURL(photo)}
-                style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 6 }}
-              />
+              <img key={i} src={URL.createObjectURL(photo)} style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 6 }} />
             ))}
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={getLocation}
-          style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}
-        >
-          📍 Ajouter ma position
-        </button>
+        <button type="button" onClick={getLocation} style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}>📍 Ajouter ma position</button>
         {location && <p style={{ fontSize: 13, color: "#666" }}>Position enregistrée</p>}
 
-        <textarea
-          name="message"
-          placeholder="Décrivez votre problème"
-          style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }}
-        />
+        <textarea name="message" placeholder="Décrivez votre problème" style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }} />
 
-        {/* RGPD */}
         <div style={{ marginTop: 15, fontSize: 14 }}>
           <label>
             <input type="checkbox" name="rgpd" required style={{ marginRight: 8 }} />
-            Je confirme avoir lu et accepté que mes données soient utilisées pour le traitement de ma demande
-            conformément à la réglementation RGPD.
+            Je confirme avoir lu et accepté que mes données soient utilisées pour le traitement de ma demande conformément à la réglementation RGPD.
           </label>
         </div>
 
-        <button
-          type="submit"
-          style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white", border: "none", borderRadius: 6 }}
-        >
-          Envoyer la demande
-        </button>
+        <button type="submit" style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white", border: "none", borderRadius: 6 }}>Envoyer la demande</button>
       </form>
 
       <p style={{ textAlign: "center", marginTop: 20 }}>{status}</p>
@@ -232,33 +155,25 @@ export default function Home() {
         </div>
       )}
 
-      <a
-        href="tel:0658908674"
-        style={{
-          position: "fixed",
-          bottom: 25,
-          right: 25,
-          background: "red",
-          color: "white",
-          width: 65,
-          height: 65,
-          borderRadius: "50%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 28,
-          textDecoration: "none",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-        }}
-      >
-        📞
-      </a>
+      <a href="tel:0658908674" style={{
+        position: "fixed",
+        bottom: 25,
+        right: 25,
+        background: "red",
+        color: "white",
+        width: 65,
+        height: 65,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 28,
+        textDecoration: "none",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
+      }}>📞</a>
 
       {showInstall && (
-        <button
-          onClick={installApp}
-          style={{ position: "fixed", bottom: 100, right: 25, padding: 10, borderRadius: 8, background: "#0070f3", color: "#fff" }}
-        >
+        <button onClick={installApp} style={{ position: "fixed", bottom: 100, right: 25, padding: 10, borderRadius: 8, background: "#0070f3", color: "#fff" }}>
           Installer l'application
         </button>
       )}
