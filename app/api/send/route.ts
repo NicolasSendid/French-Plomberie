@@ -1,9 +1,11 @@
+// route.js
 import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
     const formData = await req.formData();
 
+    // Récupération des champs
     const prenom = formData.get("prenom");
     const nom = formData.get("nom");
     const tel = formData.get("tel");
@@ -19,8 +21,10 @@ export async function POST(req) {
       mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
     }
 
+    // Récupération des photos
     const photos = formData.getAll("photos");
 
+    // Création du transporteur SMTP
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: 587,
@@ -31,20 +35,41 @@ export async function POST(req) {
       },
     });
 
+    // Préparation des pièces jointes
     const attachments = await Promise.all(
       photos.map(async (photo) => {
-        if (!photo || photo.size === 0 || !photo.type.startsWith("image/")) return null;
-        const buffer = Buffer.from(await photo.arrayBuffer());
+        if (!photo || photo.size === 0) return null;
+        if (photo.size > 5 * 1024 * 1024) return null; // ignore >5Mo
+
+        // Correction HEIC/HEIF → JPG
+        const ext = photo.name.split(".").pop().toLowerCase();
+        const filename =
+          ext === "heic" || ext === "heif"
+            ? photo.name.replace(/\.[^/.]+$/, ".jpg")
+            : photo.name;
+
+        // Vérifie type MIME sinon force image/jpeg
+        const mimeType = photo.type.startsWith("image/") ? photo.type : "image/jpeg";
+
+        let buffer;
+        try {
+          buffer = Buffer.from(await photo.arrayBuffer());
+        } catch (err) {
+          console.warn("Erreur conversion photo :", photo.name, err);
+          return null;
+        }
+
         return {
-          filename: photo.name,
+          filename,
           content: buffer,
+          contentType: mimeType,
         };
       })
     );
 
     const filteredAttachments = attachments.filter(Boolean);
 
-    // Email au plombier
+    // --- Email au plombier ---
     await transporter.sendMail({
       from: `"French Plomberie" <${process.env.SMTP_USER}>`,
       to: "frenchplomberie@gmail.com",
@@ -64,7 +89,7 @@ ${mapLink ? "Localisation : " + mapLink : ""}
       attachments: filteredAttachments,
     });
 
-    // Accusé réception client
+    // --- Accusé réception client ---
     if (email) {
       await transporter.sendMail({
         from: `"French Plomberie" <${process.env.SMTP_USER}>`,
