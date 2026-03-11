@@ -99,7 +99,7 @@ export default function Home() {
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
-      <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
+      <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
       <p style={{ textAlign: "center", color: "#555" }}>Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain</p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
