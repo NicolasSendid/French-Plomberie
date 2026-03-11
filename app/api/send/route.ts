@@ -23,19 +23,23 @@ if(latitude && longitude){
 mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
 }
 
-/* récupération des photos */
+/* récupération photos */
 
 const photos = formData.getAll("photos");
 
-/* configuration mail */
+/* configuration SMTP */
 
 const transporter = nodemailer.createTransport({
 
-service:"gmail",
+host: process.env.SMTP_HOST,
+
+port: 587,
+
+secure: false,
 
 auth:{
-user:process.env.EMAIL_USER,
-pass:process.env.EMAIL_PASS
+user: process.env.SMTP_USER,
+pass: process.env.SMTP_PASS
 }
 
 });
@@ -46,28 +50,33 @@ const attachments = await Promise.all(
 
 photos.map(async(photo)=>{
 
+if(!photo || photo.size === 0) return null;
+
 const buffer = Buffer.from(await photo.arrayBuffer());
 
 return{
-filename:photo.name,
-content:buffer
+filename: photo.name,
+content: buffer
 };
 
 })
 
 );
 
-/* email plombier */
+const filteredAttachments = attachments.filter(Boolean);
+
+/* EMAIL PLOMBIER */
 
 await transporter.sendMail({
 
-from:process.env.EMAIL_USER,
+from: `"French Plomberie" <${process.env.SMTP_USER}>`,
 
-to:"frenchplomberie@gmail.com",
+to: "frenchplomberie@gmail.com",
 
-subject:"🚰 Nouvelle demande plomberie",
+subject: "🚰 Nouvelle demande plomberie",
 
-text:`
+text: `
+
 Nouvelle demande client
 
 Nom : ${prenom} ${nom}
@@ -84,25 +93,27 @@ Message :
 ${message}
 
 ${mapLink ? "Localisation : " + mapLink : ""}
+
 `,
 
-attachments
+attachments: filteredAttachments
 
 });
 
-/* accusé réception client */
+/* ACCUSE RECEPTION CLIENT */
 
 if(email){
 
 await transporter.sendMail({
 
-from:process.env.EMAIL_USER,
+from: `"French Plomberie" <${process.env.SMTP_USER}>`,
 
-to:email,
+to: email,
 
-subject:"Votre demande plomberie a bien été reçue",
+subject: "Votre demande plomberie a bien été reçue",
 
-text:`
+text: `
+
 Bonjour ${prenom} ${nom},
 
 Merci pour votre demande.
@@ -111,7 +122,7 @@ Nous avons bien reçu votre message concernant :
 
 ${prestation}
 
-Nous vous contacterons très rapidement.
+Notre équipe va vous recontacter rapidement.
 
 French Plomberie
 📞 06 58 90 86 74
@@ -126,7 +137,7 @@ return Response.json({success:true});
 
 }catch(error){
 
-console.error(error);
+console.error("Erreur envoi email :",error);
 
 return Response.json({success:false},{status:500});
 
