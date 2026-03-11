@@ -1,30 +1,26 @@
-// route.js
 import nodemailer from "nodemailer";
 
-export async function POST(req) {
+export async function POST(req: Request): Promise<Response> {
   try {
     const formData = await req.formData();
 
-    // Récupération des champs
-    const prenom = formData.get("prenom");
-    const nom = formData.get("nom");
-    const tel = formData.get("tel");
-    const email = formData.get("email");
-    const adresse = formData.get("adresse");
-    const prestation = formData.get("prestation");
-    const message = formData.get("message");
-    const latitude = formData.get("latitude");
-    const longitude = formData.get("longitude");
+    const prenom = formData.get("prenom") as string;
+    const nom = formData.get("nom") as string;
+    const tel = formData.get("tel") as string;
+    const email = formData.get("email") as string;
+    const adresse = formData.get("adresse") as string;
+    const prestation = formData.get("prestation") as string;
+    const message = formData.get("message") as string;
+    const latitude = formData.get("latitude") as string | null;
+    const longitude = formData.get("longitude") as string | null;
 
     let mapLink = "";
     if (latitude && longitude) {
       mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
     }
 
-    // Récupération des photos
-    const photos = formData.getAll("photos");
+    const photos = formData.getAll("photos") as File[];
 
-    // Création du transporteur SMTP
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: 587,
@@ -35,20 +31,17 @@ export async function POST(req) {
       },
     });
 
-    // Préparation des pièces jointes
     const attachments = await Promise.all(
       photos.map(async (photo) => {
         if (!photo || photo.size === 0) return null;
-        if (photo.size > 5 * 1024 * 1024) return null; // ignore >5Mo
+        if (photo.size > 5 * 1024 * 1024) return null;
 
-        // Correction HEIC/HEIF → JPG
-        const ext = photo.name.split(".").pop().toLowerCase();
+        const ext = photo.name.split(".").pop()?.toLowerCase();
         const filename =
           ext === "heic" || ext === "heif"
             ? photo.name.replace(/\.[^/.]+$/, ".jpg")
             : photo.name;
 
-        // Vérifie type MIME sinon force image/jpeg
         const mimeType = photo.type.startsWith("image/") ? photo.type : "image/jpeg";
 
         let buffer;
@@ -69,7 +62,7 @@ export async function POST(req) {
 
     const filteredAttachments = attachments.filter(Boolean);
 
-    // --- Email au plombier ---
+    // Email plombier
     await transporter.sendMail({
       from: `"French Plomberie" <${process.env.SMTP_USER}>`,
       to: "frenchplomberie@gmail.com",
@@ -89,7 +82,7 @@ ${mapLink ? "Localisation : " + mapLink : ""}
       attachments: filteredAttachments,
     });
 
-    // --- Accusé réception client ---
+    // Accusé réception client
     if (email) {
       await transporter.sendMail({
         from: `"French Plomberie" <${process.env.SMTP_USER}>`,
