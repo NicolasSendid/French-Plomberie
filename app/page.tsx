@@ -95,6 +95,11 @@ if(response.ok){
 
 setStatus("✅ Demande envoyée !");
 
+  window.open(
+"https://wa.me/33658908674?text=Nouvelle demande plomberie",
+"_blank"
+);
+
 const newHistory=[...history,{
 date:new Date().toLocaleString(),
 prestation
