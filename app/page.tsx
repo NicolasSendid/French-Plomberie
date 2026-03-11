@@ -69,24 +69,9 @@ export default function Home() {
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
         window.open(
-`https://wa.me/33658908674?text=
-🚰 Nouvelle demande plomberie
-
-👤 Client : ${formData.get("prenom")} ${formData.get("nom")}
-
-📞 Téléphone : ${formData.get("tel")}
-
-📍 Adresse : ${formData.get("adresse")}
-
-🔧 Prestation : ${prestation}
-
-💬 Message :
-${formData.get("message")}
-
-📷 Photos : ${photos.length}
-`,
-"_blank"
-);
+          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${formData.get("prenom")} ${formData.get("nom")}\nTel: ${formData.get("tel")}\nAdresse: ${formData.get("adresse")}\nPrestation: ${prestation}\nMessage: ${formData.get("message")}\nPhotos: ${photos.length}`,
+          "_blank"
+        );
 
         const newHistory = [
           ...history,
@@ -114,7 +99,7 @@ ${formData.get("message")}
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
-      <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
+      <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
       <p style={{ textAlign: "center", color: "#555" }}>Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain</p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
