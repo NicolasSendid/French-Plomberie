@@ -52,14 +52,12 @@ export default function Home() {
           (blob) => {
             if (blob) {
               resolve(
-                new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
-                  type: "image/jpeg",
-                })
+                new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" })
               );
             } else resolve(file);
           },
           "image/jpeg",
-          0.8 // qualité 80%
+          0.8
         );
       };
       img.onerror = () => resolve(file);
@@ -67,12 +65,10 @@ export default function Home() {
     });
   };
 
-  // --- GESTION DES PHOTOS ---
+  // --- GESTION DES PHOTOS (max 3) ---
   const handlePhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    const converted = await Promise.all(
-      files.slice(0, 3).map((f) => convertFileToJpeg(f))
-    );
+    const files = Array.from(e.target.files ?? []).slice(0, 3); // max 3 photos
+    const converted = await Promise.all(files.map((f) => convertFileToJpeg(f)));
     setPhotos(converted);
   };
 
@@ -96,11 +92,22 @@ export default function Home() {
 
       if (res.ok) {
         setStatus("✅ Demande envoyée !");
-        // Ouvrir WhatsApp
-        window.open(
-          "https://wa.me/33658908674?text=Nouvelle demande plomberie",
-          "_blank"
-        );
+
+        // --- WhatsApp message complet ---
+        const prenom = formData.get("prenom") || "";
+        const nom = formData.get("nom") || "";
+        const tel = formData.get("tel") || "";
+        const adresse = formData.get("adresse") || "";
+        const msg = `Nouvelle demande plomberie :
+Nom : ${prenom} ${nom}
+Téléphone : ${tel}
+Adresse : ${adresse}
+Prestation : ${prestation}
+Photos : ${photos.length}`;
+
+        const waLink = `https://wa.me/33658908674?text=${encodeURIComponent(msg)}`;
+        window.open(waLink, "_blank");
+
         const newHistory = [
           ...history,
           { date: new Date().toLocaleString(), prestation },
@@ -161,7 +168,7 @@ export default function Home() {
           ))}
         </div>
 
-        <h3 style={{ marginTop: 20 }}>Photos du problème</h3>
+        <h3 style={{ marginTop: 20 }}>Photos du problème (max 3)</h3>
         <input type="file" multiple accept="image/*" onChange={handlePhotos} />
         {photos.length > 0 && (
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
