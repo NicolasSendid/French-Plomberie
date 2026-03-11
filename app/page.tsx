@@ -10,6 +10,7 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstall, setShowInstall] = useState(false);
 
+  // Historique + PWA install
   useEffect(() => {
     const stored = localStorage.getItem("demandes");
     if (stored) setHistory(JSON.parse(stored));
@@ -27,6 +28,7 @@ export default function Home() {
     await deferredPrompt.userChoice;
   };
 
+  // Géolocalisation
   const getLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -34,11 +36,13 @@ export default function Home() {
     );
   };
 
+  // Photos (limite 3)
   const handlePhotos = (e: any) => {
-    const files = Array.from(e.target.files).slice(0, 3); // max 3 photos
+    const files = Array.from(e.target.files).slice(0, 3);
     setPhotos(files);
   };
 
+  // Envoi formulaire
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!prestation) {
@@ -46,34 +50,33 @@ export default function Home() {
       return;
     }
 
-    const formData = new FormData(e.target);
-    formData.append("prestation", prestation);
-    if (location) {
-      formData.append("latitude", location.lat.toString());
-      formData.append("longitude", location.lng.toString());
-    }
-    photos.forEach((photo) => formData.append("photos", photo));
+const data = {
+  prenom: formData.get("prenom"),
+  nom: formData.get("nom"),
+  tel: formData.get("tel"),
+  email: formData.get("email"),
+  adresse: formData.get("adresse"),
+  prestation,
+  message: formData.get("message"),
+  rgpd: formData.get("rgpd")
+};
 
-    try {
-      const response = await fetch("/api/route", {
-        method: "POST",
-        body: formData,
-      });
+const response = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", {
+  method: "POST",
+  body: JSON.stringify(data)
+});
 
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
+        window.open(
+          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${formData.get("prenom")} ${formData.get("nom")}\nTel: ${formData.get("tel")}\nAdresse: ${formData.get("adresse")}\nPrestation: ${prestation}\nMessage: ${formData.get("message")}\nPhotos: ${photos.length}`,
+          "_blank"
+        );
 
-        // Message WhatsApp
-        const waText = `Nouvelle demande
-Nom: ${formData.get("prenom")} ${formData.get("nom")}
-Tel: ${formData.get("tel")}
-Adresse: ${formData.get("adresse")}
-Prestation: ${prestation}
-Message: ${formData.get("message")}
-Photos: ${photos.length}`;
-        window.open(`https://wa.me/33658908674?text=${encodeURIComponent(waText)}`, "_blank");
-
-        const newHistory = [...history, { date: new Date().toLocaleString(), prestation }];
+        const newHistory = [
+          ...history,
+          { date: new Date().toLocaleString(), prestation }
+        ];
         setHistory(newHistory);
         localStorage.setItem("demandes", JSON.stringify(newHistory));
 
@@ -82,8 +85,6 @@ Photos: ${photos.length}`;
         setPrestation("");
         setLocation(null);
       } else {
-        const data = await response.json();
-        console.error(data);
         setStatus("❌ Erreur lors de l'envoi");
       }
     } catch (err) {
@@ -98,7 +99,7 @@ Photos: ${photos.length}`;
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
-      <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
+      <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
       <p style={{ textAlign: "center", color: "#555" }}>Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain</p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
@@ -132,6 +133,7 @@ Photos: ${photos.length}`;
 
         <textarea name="message" placeholder="Décrivez votre problème" style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }} />
 
+        {/* RGPD */}
         <div style={{ marginTop: 15, fontSize: 14 }}>
           <label>
             <input type="checkbox" name="rgpd" required style={{ marginRight: 8 }} />
