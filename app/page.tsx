@@ -50,33 +50,35 @@ export default function Home() {
       return;
     }
 
-const data = {
-  prenom: formData.get("prenom"),
-  nom: formData.get("nom"),
-  tel: formData.get("tel"),
-  email: formData.get("email"),
-  adresse: formData.get("adresse"),
-  prestation,
-  message: formData.get("message"),
-  rgpd: formData.get("rgpd")
-};
+    const formData = new FormData(e.target);
+    formData.append("prestation", prestation);
+    if (location) {
+      formData.append("latitude", location.lat.toString());
+      formData.append("longitude", location.lng.toString());
+    }
+    photos.forEach((photo) => formData.append("photos", photo));
 
-const response = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", {
-  method: "POST",
-  body: JSON.stringify(data)
-});
+    try {
+      const response = await fetch("/api/route", {
+        method: "POST",
+        body: formData,
+      });
 
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
-        window.open(
-          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${formData.get("prenom")} ${formData.get("nom")}\nTel: ${formData.get("tel")}\nAdresse: ${formData.get("adresse")}\nPrestation: ${prestation}\nMessage: ${formData.get("message")}\nPhotos: ${photos.length}`,
-          "_blank"
-        );
 
-        const newHistory = [
-          ...history,
-          { date: new Date().toLocaleString(), prestation }
-        ];
+        // Message WhatsApp
+        const waMessage = `Nouvelle demande
+Nom: ${formData.get("prenom")} ${formData.get("nom")}
+Tel: ${formData.get("tel")}
+Adresse: ${formData.get("adresse")}
+Prestation: ${prestation}
+Message: ${formData.get("message")}
+Photos: ${photos.length}`;
+
+        window.open(`https://wa.me/33658908674?text=${encodeURIComponent(waMessage)}`, "_blank");
+
+        const newHistory = [...history, { date: new Date().toLocaleString(), prestation }];
         setHistory(newHistory);
         localStorage.setItem("demandes", JSON.stringify(newHistory));
 
