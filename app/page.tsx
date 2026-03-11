@@ -88,7 +88,10 @@ export default function Home() {
     photos.forEach((photo) => formData.append("photos", photo));
 
     try {
-      const res = await fetch("/api/send", { method: "POST", body: formData });
+      const res = await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", {
+  method: "POST",
+  body: formData
+});
 
       if (res.ok) {
         setStatus("✅ Demande envoyée !");
