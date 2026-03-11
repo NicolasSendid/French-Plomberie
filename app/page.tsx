@@ -185,9 +185,9 @@ onClick={()=>setPrestation("chauffage / ballon ECS")}
 style={{
 padding:"15px",
 borderRadius:"8px",
-border:prestation==="chauffage"?"2px solid #0070f3":"1px solid #ccc"
+border:prestation==="chauffage / ballon ECS"?"2px solid #0070f3":"1px solid #ccc"
 }}>
-🔥 Chauffage
+🔥 Chauffage / Ballon ECS
 </button>
 
 <button type="button"
