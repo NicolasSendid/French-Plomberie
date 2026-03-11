@@ -3,377 +3,243 @@
 import { useState, useEffect } from "react";
 
 export default function Home() {
-
-const [status,setStatus]=useState("");
-const [prestation,setPrestation]=useState("");
-const [photos,setPhotos]=useState([]);
-const [location,setLocation]=useState(null);
-const [history,setHistory]=useState([]);
-const [showInstall,setShowInstall]=useState(false);
-const [deferredPrompt,setDeferredPrompt]=useState(null);
-
-useEffect(()=>{
-
-const stored = localStorage.getItem("demandes");
-if(stored){
-setHistory(JSON.parse(stored));
-}
-
-window.addEventListener("beforeinstallprompt",(e)=>{
-e.preventDefault();
-setDeferredPrompt(e);
-setShowInstall(true);
-});
-
-},[]);
-
-const installApp=async()=>{
-
-if(!deferredPrompt) return;
-
-deferredPrompt.prompt();
-await deferredPrompt.userChoice;
-
-};
-
-/* GEOLOCALISATION */
-
-const getLocation=()=>{
-
-navigator.geolocation.getCurrentPosition((pos)=>{
-
-const coords={
-lat:pos.coords.latitude,
-lng:pos.coords.longitude
-};
-
-setLocation(coords);
-
-},()=>{
-alert("Impossible d'obtenir la localisation");
-});
-
-};
-
-/* PHOTOS */
-
-const handlePhotos=(e)=>{
-
-const files=Array.from(e.target.files).slice(0,3);
-
-setPhotos(files);
-
-};
-
-/* ENVOI FORMULAIRE */
-
-const handleSubmit=async(e)=>{
-
-e.preventDefault();
-
-const formData=new FormData(e.target);
-
-formData.append("prestation",prestation);
-
-if(location){
-formData.append("latitude",location.lat);
-formData.append("longitude",location.lng);
-}
-
-photos.forEach((photo)=>{
-formData.append("photos",photo);
-});
-
-try{
-
-const response=await fetch("/api/send",{
-method:"POST",
-body:formData
-});
-
-if(response.ok){
-
-setStatus("✅ Demande envoyée !");
-
-/* récupération des champs du formulaire */
-
-const prenom = formData.get("prenom");
-const nom = formData.get("nom");
-const tel = formData.get("tel");
-const adresse = formData.get("adresse");
-const messageClient = formData.get("message");
-
-/* lien google maps si position */
-
-let mapLink = "";
-
-if(location){
-mapLink = `https://www.google.com/maps?q=${location.lat},${location.lng}`;
-}
-
-/* message whatsapp */
-
-const message = `
-Nouvelle demande plomberie
-
-Nom : ${prenom} ${nom}
-Téléphone : ${tel}
-Prestation : ${prestation}
-Adresse : ${adresse}
-
-Message :
-${messageClient}
-
-${mapLink ? "Localisation : " + mapLink : ""}
-`;
-
-window.open(
-`https://wa.me/33658908674?text=${encodeURIComponent(message)}`,
-"_blank"
-);
-
-/* historique */
-
-const newHistory=[...history,{
-date:new Date().toLocaleString(),
-prestation
-}];
-
-setHistory(newHistory);
-localStorage.setItem("demandes",JSON.stringify(newHistory));
-
-e.target.reset();
-setPhotos([]);
-
-}else{
-
-setStatus("❌ Erreur lors de l'envoi");
-
-}
-
-}catch{
-
-setStatus("❌ Impossible d'envoyer la demande");
-
-}
-
-};
-
-return(
-
-<div style={{
-maxWidth:"700px",
-margin:"auto",
-padding:"30px",
-fontFamily:"Arial"
-}}>
-
-<div style={{textAlign:"center"}}>
-<img src="/logo.png" style={{width:"140px"}}/>
-</div>
-
-<h1 style={{textAlign:"center"}}>
-Plombier disponible rapidement
-</h1>
-
-<p style={{textAlign:"center",color:"#555"}}>
-Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
-</p>
-
-<form onSubmit={handleSubmit} style={{
-background:"#f9f9f9",
-padding:"25px",
-borderRadius:"10px"
-}}>
-
-<h2>Vos informations</h2>
-
-<input name="prenom" placeholder="Prénom" required />
-<input name="nom" placeholder="Nom" required />
-<input name="tel" placeholder="Téléphone" required />
-<input name="email" placeholder="Email" />
-<input name="adresse" placeholder="Adresse intervention" required />
-
-<h3 style={{marginTop:"20px"}}>Prestation</h3>
-
-<div style={{
-display:"grid",
-gridTemplateColumns:"1fr 1fr",
-gap:"10px"
-}}>
-
-<button type="button"
-onClick={()=>setPrestation("depannage")}
-style={{
-padding:"15px",
-borderRadius:"8px",
-border:prestation==="depannage"?"2px solid #0070f3":"1px solid #ccc"
-}}>
-🔧 Dépannage fuite
-</button>
-
-<button type="button"
-onClick={()=>setPrestation("chauffage / ballon ECS")}
-style={{
-padding:"15px",
-borderRadius:"8px",
-border:prestation==="chauffage / ballon ECS"?"2px solid #0070f3":"1px solid #ccc"
-}}>
-🔥 Chauffage / Ballon ECS
-</button>
-
-<button type="button"
-onClick={()=>setPrestation("cuisine")}
-style={{
-padding:"15px",
-borderRadius:"8px",
-border:prestation==="cuisine"?"2px solid #0070f3":"1px solid #ccc"
-}}>
-🍳 Cuisine
-</button>
-
-<button type="button"
-onClick={()=>setPrestation("sdb")}
-style={{
-padding:"15px",
-borderRadius:"8px",
-border:prestation==="sdb"?"2px solid #0070f3":"1px solid #ccc"
-}}>
-🛁 Salle de bain
-</button>
-
-</div>
-
-<h3 style={{marginTop:"20px"}}>Photos du problème</h3>
-
-<input
-type="file"
-multiple
-accept="image/*"
-onChange={handlePhotos}
-/>
-
-{photos.length>0 &&(
-
-<div style={{display:"flex",gap:"10px",marginTop:"10px"}}>
-
-{photos.map((photo,i)=>{
-
-const url=URL.createObjectURL(photo);
-
-return(
-<img
-key={i}
-src={url}
-style={{
-width:"70px",
-height:"70px",
-objectFit:"cover",
-borderRadius:"6px"
-}}
-/>
-);
-
-})}
-
-</div>
-
-)}
-
-<button
-type="button"
-onClick={getLocation}
-style={{
-marginTop:"15px",
-padding:"10px",
-background:"#eee",
-border:"none",
-borderRadius:"6px"
-}}
->
-📍 Ajouter ma position
-</button>
-
-{location &&(
-
-<p style={{fontSize:"13px",color:"#666"}}>
-Position enregistrée
-</p>
-
-)}
-
-<textarea
-name="message"
-placeholder="Décrivez votre problème"
-style={{
-width:"100%",
-marginTop:"20px",
-padding:"10px",
-borderRadius:"6px"
-}}
-/>
-
-<button type="submit" style={{
-marginTop:"25px",
-width:"100%",
-padding:"14px",
-background:"black",
-color:"white",
-border:"none",
-borderRadius:"6px"
-}}>
-Envoyer la demande
-</button>
-
-</form>
-
-<p style={{textAlign:"center",marginTop:"20px"}}>
-{status}
-</p>
-
-{history.length>0 &&(
-
-<div style={{marginTop:"40px"}}>
-
-<h3>Historique des demandes</h3>
-
-{history.map((h,i)=>(
-<div key={i} style={{
-padding:"10px",
-borderBottom:"1px solid #ddd"
-}}>
-{h.date} — {h.prestation}
-</div>
-))}
-
-</div>
-
-)}
-
-<a
-href="tel:0658908674"
-style={{
-position:"fixed",
-bottom:"25px",
-right:"25px",
-background:"red",
-color:"white",
-width:"65px",
-height:"65px",
-borderRadius:"50%",
-display:"flex",
-alignItems:"center",
-justifyContent:"center",
-fontSize:"28px",
-textDecoration:"none",
-boxShadow:"0 4px 12px rgba(0,0,0,0.3)"
-}}
->
-📞
-</a>
-
-</div>
-
-);
-
+  const [status, setStatus] = useState("");
+  const [prestation, setPrestation] = useState("");
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [location, setLocation] = useState<{lat:number,lng:number}|null>(null);
+  const [history, setHistory] = useState<{date:string,prestation:string}[]>([]);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstall, setShowInstall] = useState(false);
+
+  // --- INSTALL PWA ---
+  useEffect(() => {
+    const stored = localStorage.getItem("demandes");
+    if (stored) setHistory(JSON.parse(stored));
+
+    window.addEventListener("beforeinstallprompt", (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstall(true);
+    });
+  }, []);
+
+  const installApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+  };
+
+  // --- GEOLOCALISATION ---
+  const getLocation = () => {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => alert("Impossible d'obtenir la localisation")
+    );
+  };
+
+  // --- CONVERTIR PHOTO EN JPEG ---
+  const convertFileToJpeg = async (file: File): Promise<File> => {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(file);
+        ctx.drawImage(img, 0, 0);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              resolve(
+                new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                  type: "image/jpeg",
+                })
+              );
+            } else resolve(file);
+          },
+          "image/jpeg",
+          0.8 // qualité 80%
+        );
+      };
+      img.onerror = () => resolve(file);
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  // --- GESTION DES PHOTOS ---
+  const handlePhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    const converted = await Promise.all(
+      files.slice(0, 3).map((f) => convertFileToJpeg(f))
+    );
+    setPhotos(converted);
+  };
+
+  // --- ENVOI FORMULAIRE ---
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!prestation) return setStatus("⚠️ Veuillez choisir une prestation");
+
+    const formData = new FormData(e.currentTarget);
+    formData.append("prestation", prestation);
+
+    if (location) {
+      formData.append("latitude", location.lat.toString());
+      formData.append("longitude", location.lng.toString());
+    }
+
+    photos.forEach((photo) => formData.append("photos", photo));
+
+    try {
+      const res = await fetch("/api/send", { method: "POST", body: formData });
+
+      if (res.ok) {
+        setStatus("✅ Demande envoyée !");
+        // Ouvrir WhatsApp
+        window.open(
+          "https://wa.me/33658908674?text=Nouvelle demande plomberie",
+          "_blank"
+        );
+        const newHistory = [
+          ...history,
+          { date: new Date().toLocaleString(), prestation },
+        ];
+        setHistory(newHistory);
+        localStorage.setItem("demandes", JSON.stringify(newHistory));
+        e.currentTarget.reset();
+        setPhotos([]);
+      } else setStatus("❌ Erreur lors de l'envoi");
+    } catch {
+      setStatus("❌ Impossible d'envoyer la demande");
+    }
+  };
+
+  return (
+    <div style={{ maxWidth: 700, margin: "auto", padding: 30, fontFamily: "Arial" }}>
+      {/* Logo */}
+      <div style={{ textAlign: "center" }}>
+        <img src="/logo.png" style={{ width: 140 }} />
+      </div>
+
+      <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
+      <p style={{ textAlign: "center", color: "#555" }}>
+        Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
+      </p>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}
+      >
+        <h2>Vos informations</h2>
+        <input name="prenom" placeholder="Prénom" required />
+        <input name="nom" placeholder="Nom" required />
+        <input name="tel" placeholder="Téléphone" required />
+        <input name="email" placeholder="Email" />
+        <input name="adresse" placeholder="Adresse intervention" required />
+
+        <h3 style={{ marginTop: 20 }}>Prestation</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {[
+            { id: "depannage", label: "🔧 Dépannage fuite" },
+            { id: "chauffage", label: "🔥 Chauffage / Ballon ECS" },
+            { id: "cuisine", label: "🍳 Cuisine" },
+            { id: "sdb", label: "🛁 Salle de bain" },
+          ].map((p) => (
+            <button
+              type="button"
+              key={p.id}
+              onClick={() => setPrestation(p.id)}
+              style={{
+                padding: 15,
+                borderRadius: 8,
+                border: prestation === p.id ? "2px solid #0070f3" : "1px solid #ccc",
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        <h3 style={{ marginTop: 20 }}>Photos du problème</h3>
+        <input type="file" multiple accept="image/*" onChange={handlePhotos} />
+        {photos.length > 0 && (
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            {photos.map((photo, i) => (
+              <img
+                key={i}
+                src={URL.createObjectURL(photo)}
+                style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 6 }}
+              />
+            ))}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={getLocation}
+          style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}
+        >
+          📍 Ajouter ma position
+        </button>
+        {location && <p style={{ fontSize: 13, color: "#666" }}>Position enregistrée</p>}
+
+        <textarea
+          name="message"
+          placeholder="Décrivez votre problème"
+          style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }}
+        />
+
+        <button
+          type="submit"
+          style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white", border: "none", borderRadius: 6 }}
+        >
+          Envoyer la demande
+        </button>
+      </form>
+
+      <p style={{ textAlign: "center", marginTop: 20 }}>{status}</p>
+
+      {history.length > 0 && (
+        <div style={{ marginTop: 40 }}>
+          <h3>Historique des demandes</h3>
+          {history.map((h, i) => (
+            <div key={i} style={{ padding: 10, borderBottom: "1px solid #ddd" }}>
+              {h.date} — {h.prestation}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Bouton urgence */}
+      <a
+        href="tel:0658908674"
+        style={{
+          position: "fixed",
+          bottom: 25,
+          right: 25,
+          background: "red",
+          color: "white",
+          width: 65,
+          height: 65,
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 28,
+          textDecoration: "none",
+          boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+        }}
+      >
+        📞
+      </a>
+
+      {/* Installation PWA */}
+      {showInstall && (
+        <button onClick={installApp} style={{ position: "fixed", bottom: 100, right: 25 }}>
+          Installer l'application
+        </button>
+      )}
+    </div>
+  );
 }
