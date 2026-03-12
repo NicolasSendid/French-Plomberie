@@ -14,7 +14,7 @@ export default function Home() {
     const stored = localStorage.getItem("demandes");
     if (stored) setHistory(JSON.parse(stored));
 
-    window.addEventListener("beforeinstallprompt", (e) => {
+    window.addEventListener("beforeinstallprompt", (e:any) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstall(true);
@@ -34,12 +34,12 @@ export default function Home() {
     );
   };
 
-  const handlePhotos = (e: any) => {
-    const files = Array.from(e.target.files).slice(0, 3);
+  const handlePhotos = (e:any) => {
+    const files = Array.from(e.target.files).slice(0, 3) as File[];
     setPhotos(files);
   };
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e:any) => {
     e.preventDefault();
     setStatus("Envoi en cours...");
 
@@ -52,7 +52,7 @@ export default function Home() {
 
     formData.append("prestation", prestation);
 
-    photos.forEach((photo) => {
+    photos.forEach(photo => {
       formData.append("photos", photo);
     });
 
@@ -62,14 +62,16 @@ export default function Home() {
     }
 
     try {
-      const response = await fetch("/api/route", {
+
+      const res = await fetch("/api/send", {
         method: "POST",
-        body: formData,
+        body: formData
       });
 
-      const result = await response.json();
+      const data = await res.json();
 
-      if (result.success) {
+      if (data.success) {
+
         setStatus("✅ Demande envoyée");
 
         const prenom = formData.get("prenom");
@@ -79,12 +81,13 @@ export default function Home() {
         const message = formData.get("message");
 
         const whatsappMessage =
-          `Nouvelle demande plomberie\n\n` +
-          `Nom: ${prenom} ${nom}\n` +
-          `Tel: ${tel}\n` +
-          `Adresse: ${adresse}\n` +
-          `Prestation: ${prestation}\n` +
-          `Message: ${message}`;
+`Nouvelle demande plomberie
+
+Nom: ${prenom} ${nom}
+Tel: ${tel}
+Adresse: ${adresse}
+Prestation: ${prestation}
+Message: ${message}`;
 
         window.open(
           `https://wa.me/33658908674?text=${encodeURIComponent(whatsappMessage)}`,
@@ -93,7 +96,7 @@ export default function Home() {
 
         const newHistory = [
           ...history,
-          { date: new Date().toLocaleString(), prestation },
+          { date: new Date().toLocaleString(), prestation }
         ];
 
         setHistory(newHistory);
@@ -103,27 +106,32 @@ export default function Home() {
         setPhotos([]);
         setPrestation("");
         setLocation(null);
+
       } else {
         setStatus("❌ Erreur lors de l'envoi");
       }
-    } catch (error) {
-      console.error(error);
+
+    } catch (err) {
+      console.error(err);
       setStatus("❌ Impossible d'envoyer la demande");
     }
   };
 
   return (
     <div style={{ maxWidth: 700, margin: "auto", padding: 30, fontFamily: "Arial" }}>
+
       <div style={{ textAlign: "center" }}>
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
       <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
+
       <p style={{ textAlign: "center", color: "#555" }}>
         Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
       </p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
+
         <h2>Vos informations</h2>
 
         <input name="prenom" placeholder="Prénom" required />
@@ -135,20 +143,42 @@ export default function Home() {
         <h3 style={{ marginTop: 20 }}>Prestation</h3>
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <button type="button" onClick={() => setPrestation("Dépannage fuite")}>🔧 Dépannage fuite</button>
-          <button type="button" onClick={() => setPrestation("Chauffage / Ballon ECS")}>🔥 Chauffage</button>
-          <button type="button" onClick={() => setPrestation("Cuisine")}>🍳 Cuisine</button>
-          <button type="button" onClick={() => setPrestation("Salle de bain")}>🛁 Salle de bain</button>
+
+          <button type="button" onClick={() => setPrestation("Dépannage fuite")}>
+            🔧 Dépannage fuite
+          </button>
+
+          <button type="button" onClick={() => setPrestation("Chauffage / Ballon ECS")}>
+            🔥 Chauffage / Ballon ECS
+          </button>
+
+          <button type="button" onClick={() => setPrestation("Cuisine")}>
+            🍳 Cuisine
+          </button>
+
+          <button type="button" onClick={() => setPrestation("Salle de bain")}>
+            🛁 Salle de bain
+          </button>
+
         </div>
 
-        <h3 style={{ marginTop: 20 }}>Photos (max 3)</h3>
+        <h3 style={{ marginTop: 20 }}>Photos du problème (max 3)</h3>
 
         <input type="file" multiple accept="image/*" onChange={handlePhotos} />
 
         {photos.length > 0 && (
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             {photos.map((photo, i) => (
-              <img key={i} src={URL.createObjectURL(photo)} style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 6 }} />
+              <img
+                key={i}
+                src={URL.createObjectURL(photo)}
+                style={{
+                  width: 70,
+                  height: 70,
+                  objectFit: "cover",
+                  borderRadius: 6
+                }}
+              />
             ))}
           </div>
         )}
@@ -156,24 +186,54 @@ export default function Home() {
         <button
           type="button"
           onClick={getLocation}
-          style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}
+          style={{
+            marginTop: 15,
+            padding: 10,
+            background: "#eee",
+            border: "none",
+            borderRadius: 6
+          }}
         >
           📍 Ajouter ma position
         </button>
 
-        {location && <p style={{ fontSize: 13 }}>Position enregistrée</p>}
+        {location && (
+          <p style={{ fontSize: 13 }}>Position enregistrée</p>
+        )}
 
-        <textarea name="message" placeholder="Décrivez votre problème" style={{ width: "100%", marginTop: 20, padding: 10 }} />
+        <textarea
+          name="message"
+          placeholder="Décrivez votre problème"
+          style={{
+            width: "100%",
+            marginTop: 20,
+            padding: 10,
+            borderRadius: 6
+          }}
+        />
 
-        <div style={{ marginTop: 15 }}>
+        <div style={{ marginTop: 15, fontSize: 14 }}>
           <label>
-            <input type="checkbox" name="rgpd" required /> J'accepte le traitement de mes données
+            <input type="checkbox" name="rgpd" required />
+            Je confirme accepter le traitement de mes données
           </label>
         </div>
 
-        <button type="submit" style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white" }}>
+        <button
+          type="submit"
+          style={{
+            marginTop: 25,
+            width: "100%",
+            padding: 14,
+            background: "black",
+            color: "white",
+            border: "none",
+            borderRadius: 6
+          }}
+        >
           Envoyer la demande
         </button>
+
       </form>
 
       <p style={{ textAlign: "center", marginTop: 20 }}>{status}</p>
@@ -193,7 +253,7 @@ export default function Home() {
           alignItems: "center",
           justifyContent: "center",
           fontSize: 28,
-          textDecoration: "none",
+          textDecoration: "none"
         }}
       >
         📞
@@ -202,11 +262,20 @@ export default function Home() {
       {showInstall && (
         <button
           onClick={installApp}
-          style={{ position: "fixed", bottom: 100, right: 25, padding: 10 }}
+          style={{
+            position: "fixed",
+            bottom: 100,
+            right: 25,
+            padding: 10,
+            borderRadius: 8,
+            background: "#0070f3",
+            color: "#fff"
+          }}
         >
           Installer l'application
         </button>
       )}
+
     </div>
   );
 }
