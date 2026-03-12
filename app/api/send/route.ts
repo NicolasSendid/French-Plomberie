@@ -40,23 +40,40 @@ export async function POST(req: Request) {
     });
 
     // Traitement photos
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/heic",
+      "image/heif"
+    ];
+
     const attachments = await Promise.all(
 
-      photos.map(async (photo) => {
+      photos.slice(0,3).map(async (photo) => {
 
         if (!photo || photo.size === 0) return null;
 
-        if (photo.size > 5 * 1024 * 1024) return null;
+        if (photo.size > 8 * 1024 * 1024) {
+          console.log("Photo trop lourde ignorée");
+          return null;
+        }
 
-        const ext = photo.name.split(".").pop()?.toLowerCase();
+        let mimeType = photo.type;
 
-        const filename =
-          ext === "heic" || ext === "heif"
-            ? photo.name.replace(/\.[^/.]+$/, ".jpg")
-            : photo.name;
+        if (!allowedTypes.includes(mimeType)) {
+          mimeType = "image/jpeg";
+        }
 
-        const mimeType =
-          photo.type.startsWith("image/") ? photo.type : "image/jpeg";
+        let filename = photo.name;
+
+        const ext = filename.split(".").pop()?.toLowerCase();
+
+        if (ext === "heic" || ext === "heif") {
+          filename = filename.replace(/\.[^/.]+$/, ".jpg");
+          mimeType = "image/jpeg";
+        }
 
         const buffer = Buffer.from(await photo.arrayBuffer());
 
@@ -71,7 +88,6 @@ export async function POST(req: Request) {
     );
 
     const filteredAttachments = attachments.filter(Boolean);
-
     // EMAIL AU PLOMBIER
 
     await transporter.sendMail({
