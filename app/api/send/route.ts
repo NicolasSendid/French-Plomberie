@@ -39,35 +39,37 @@ export async function POST(req: Request) {
 
     });
 
-    // Traitement photos
+    // --- Traitement des photos avec HEIC → JPG et compression ---
     const attachments = await Promise.all(
+      photos.slice(0, 3).map(async (photo) => {
+        if (!photo || photo.size === 0 || photo.size > 10 * 1024 * 1024) return null; // ignore >10Mo
 
-      photos.map(async (photo) => {
-
-        if (!photo || photo.size === 0) return null;
-
-        if (photo.size > 5 * 1024 * 1024) return null;
-
+        let buffer = Buffer.from(await photo.arrayBuffer());
         const ext = photo.name.split(".").pop()?.toLowerCase();
+        let filename = photo.name;
 
-        const filename =
-          ext === "heic" || ext === "heif"
-            ? photo.name.replace(/\.[^/.]+$/, ".jpg")
-            : photo.name;
+        // Convertir HEIC/HEIF en JPG
+        if (ext === "heic" || ext === "heif") {
+          filename = photo.name.replace(/\.[^/.]+$/, ".jpg");
+        }
 
-        const mimeType =
-          photo.type.startsWith("image/") ? photo.type : "image/jpeg";
-
-        const buffer = Buffer.from(await photo.arrayBuffer());
+        // Compression + conversion JPG
+        try {
+          buffer = await sharp(buffer)
+            .resize({ width: 2000, withoutEnlargement: true })
+            .jpeg({ quality: 80 })
+            .toBuffer();
+        } catch (err) {
+          console.warn("Erreur conversion photo :", photo.name, err);
+          return null;
+        }
 
         return {
           filename,
           content: buffer,
-          contentType: mimeType
+          contentType: "image/jpeg"
         };
-
       })
-
     );
 
     const filteredAttachments = attachments.filter(Boolean);
