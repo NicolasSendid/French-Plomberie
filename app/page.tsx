@@ -10,7 +10,6 @@ export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstall, setShowInstall] = useState(false);
 
-  // Historique + PWA install
   useEffect(() => {
     const stored = localStorage.getItem("demandes");
     if (stored) setHistory(JSON.parse(stored));
@@ -28,7 +27,6 @@ export default function Home() {
     await deferredPrompt.userChoice;
   };
 
-  // Géolocalisation
   const getLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (pos) => setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
@@ -36,27 +34,32 @@ export default function Home() {
     );
   };
 
-  // Photos (limite 3)
   const handlePhotos = (e: any) => {
     const files = Array.from(e.target.files).slice(0, 3);
     setPhotos(files);
   };
 
-  // Envoi formulaire
   const handleSubmit = async (e: any) => {
     e.preventDefault();
+    setStatus("Envoi en cours...");
+
     if (!prestation) {
       setStatus("❌ Veuillez choisir une prestation");
       return;
     }
 
     const formData = new FormData(e.target);
+
     formData.append("prestation", prestation);
+
+    photos.forEach((photo) => {
+      formData.append("photos", photo);
+    });
+
     if (location) {
       formData.append("latitude", location.lat.toString());
       formData.append("longitude", location.lng.toString());
     }
-    photos.forEach((photo) => formData.append("photos", photo));
 
     try {
       const response = await fetch("/api/route", {
@@ -64,21 +67,35 @@ export default function Home() {
         body: formData,
       });
 
-      if (response.ok) {
-        setStatus("✅ Demande envoyée !");
+      const result = await response.json();
 
-        // Message WhatsApp
-        const waMessage = `Nouvelle demande
-Nom: ${formData.get("prenom")} ${formData.get("nom")}
-Tel: ${formData.get("tel")}
-Adresse: ${formData.get("adresse")}
-Prestation: ${prestation}
-Message: ${formData.get("message")}
-Photos: ${photos.length}`;
+      if (result.success) {
+        setStatus("✅ Demande envoyée");
 
-        window.open(`https://wa.me/33658908674?text=${encodeURIComponent(waMessage)}`, "_blank");
+        const prenom = formData.get("prenom");
+        const nom = formData.get("nom");
+        const tel = formData.get("tel");
+        const adresse = formData.get("adresse");
+        const message = formData.get("message");
 
-        const newHistory = [...history, { date: new Date().toLocaleString(), prestation }];
+        const whatsappMessage =
+          `Nouvelle demande plomberie\n\n` +
+          `Nom: ${prenom} ${nom}\n` +
+          `Tel: ${tel}\n` +
+          `Adresse: ${adresse}\n` +
+          `Prestation: ${prestation}\n` +
+          `Message: ${message}`;
+
+        window.open(
+          `https://wa.me/33658908674?text=${encodeURIComponent(whatsappMessage)}`,
+          "_blank"
+        );
+
+        const newHistory = [
+          ...history,
+          { date: new Date().toLocaleString(), prestation },
+        ];
+
         setHistory(newHistory);
         localStorage.setItem("demandes", JSON.stringify(newHistory));
 
@@ -89,8 +106,8 @@ Photos: ${photos.length}`;
       } else {
         setStatus("❌ Erreur lors de l'envoi");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       setStatus("❌ Impossible d'envoyer la demande");
     }
   };
@@ -102,10 +119,13 @@ Photos: ${photos.length}`;
       </div>
 
       <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
-      <p style={{ textAlign: "center", color: "#555" }}>Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain</p>
+      <p style={{ textAlign: "center", color: "#555" }}>
+        Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
+      </p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
         <h2>Vos informations</h2>
+
         <input name="prenom" placeholder="Prénom" required />
         <input name="nom" placeholder="Nom" required />
         <input name="tel" placeholder="Téléphone" required />
@@ -113,15 +133,18 @@ Photos: ${photos.length}`;
         <input name="adresse" placeholder="Adresse intervention" required />
 
         <h3 style={{ marginTop: 20 }}>Prestation</h3>
+
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          <button type="button" onClick={() => setPrestation("Dépannage fuite")} style={{ padding: 15, borderRadius: 8, border: prestation === "Dépannage fuite" ? "2px solid #0070f3" : "1px solid #ccc" }}>🔧 Dépannage fuite</button>
-          <button type="button" onClick={() => setPrestation("Chauffage / Ballon ECS")} style={{ padding: 15, borderRadius: 8, border: prestation === "Chauffage / Ballon ECS" ? "2px solid #0070f3" : "1px solid #ccc" }}>🔥 Chauffage / Ballon ECS</button>
-          <button type="button" onClick={() => setPrestation("Cuisine")} style={{ padding: 15, borderRadius: 8, border: prestation === "Cuisine" ? "2px solid #0070f3" : "1px solid #ccc" }}>🍳 Cuisine</button>
-          <button type="button" onClick={() => setPrestation("Salle de bain")} style={{ padding: 15, borderRadius: 8, border: prestation === "Salle de bain" ? "2px solid #0070f3" : "1px solid #ccc" }}>🛁 Salle de bain</button>
+          <button type="button" onClick={() => setPrestation("Dépannage fuite")}>🔧 Dépannage fuite</button>
+          <button type="button" onClick={() => setPrestation("Chauffage / Ballon ECS")}>🔥 Chauffage</button>
+          <button type="button" onClick={() => setPrestation("Cuisine")}>🍳 Cuisine</button>
+          <button type="button" onClick={() => setPrestation("Salle de bain")}>🛁 Salle de bain</button>
         </div>
 
-        <h3 style={{ marginTop: 20 }}>Photos du problème (max 3)</h3>
+        <h3 style={{ marginTop: 20 }}>Photos (max 3)</h3>
+
         <input type="file" multiple accept="image/*" onChange={handlePhotos} />
+
         {photos.length > 0 && (
           <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
             {photos.map((photo, i) => (
@@ -130,54 +153,57 @@ Photos: ${photos.length}`;
           </div>
         )}
 
-        <button type="button" onClick={getLocation} style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}>📍 Ajouter ma position</button>
-        {location && <p style={{ fontSize: 13, color: "#666" }}>Position enregistrée</p>}
+        <button
+          type="button"
+          onClick={getLocation}
+          style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}
+        >
+          📍 Ajouter ma position
+        </button>
 
-        <textarea name="message" placeholder="Décrivez votre problème" style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }} />
+        {location && <p style={{ fontSize: 13 }}>Position enregistrée</p>}
 
-        {/* RGPD */}
-        <div style={{ marginTop: 15, fontSize: 14 }}>
+        <textarea name="message" placeholder="Décrivez votre problème" style={{ width: "100%", marginTop: 20, padding: 10 }} />
+
+        <div style={{ marginTop: 15 }}>
           <label>
-            <input type="checkbox" name="rgpd" required style={{ marginRight: 8 }} />
-            Je confirme avoir lu et accepté que mes données soient utilisées pour le traitement de ma demande conformément à la réglementation RGPD.
+            <input type="checkbox" name="rgpd" required /> J'accepte le traitement de mes données
           </label>
         </div>
 
-        <button type="submit" style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white", border: "none", borderRadius: 6 }}>Envoyer la demande</button>
+        <button type="submit" style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white" }}>
+          Envoyer la demande
+        </button>
       </form>
 
       <p style={{ textAlign: "center", marginTop: 20 }}>{status}</p>
 
-      {history.length > 0 && (
-        <div style={{ marginTop: 40 }}>
-          <h3>Historique des demandes</h3>
-          {history.map((h, i) => (
-            <div key={i} style={{ padding: 10, borderBottom: "1px solid #ddd" }}>
-              {h.date} — {h.prestation}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <a href="tel:0658908674" style={{
-        position: "fixed",
-        bottom: 25,
-        right: 25,
-        background: "red",
-        color: "white",
-        width: 65,
-        height: 65,
-        borderRadius: "50%",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 28,
-        textDecoration: "none",
-        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
-      }}>📞</a>
+      <a
+        href="tel:0658908674"
+        style={{
+          position: "fixed",
+          bottom: 25,
+          right: 25,
+          background: "red",
+          color: "white",
+          width: 65,
+          height: 65,
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: 28,
+          textDecoration: "none",
+        }}
+      >
+        📞
+      </a>
 
       {showInstall && (
-        <button onClick={installApp} style={{ position: "fixed", bottom: 100, right: 25, padding: 10, borderRadius: 8, background: "#0070f3", color: "#fff" }}>
+        <button
+          onClick={installApp}
+          style={{ position: "fixed", bottom: 100, right: 25, padding: 10 }}
+        >
           Installer l'application
         </button>
       )}
