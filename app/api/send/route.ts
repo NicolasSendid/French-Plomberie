@@ -33,41 +33,38 @@ export async function POST(req: Request) {
       }
     });
 
-    // Traitement photos de manière sûre
-    const attachments = await Promise.all(
-      photos
-        .slice(0, 3) // limiter à 3 photos max
-        .map(async (photo) => {
-          if (!photo || photo.size === 0) return null;
-          if (photo.size > 5 * 1024 * 1024) return null; // ignore >5Mo
+   // Traitement photos de manière sûre
+const attachments = await Promise.all(
+  photos
+    .slice(0, 3) // limiter à 3 photos max
+    .map(async (photo) => {
+      try {
+        if (!photo || photo.size === 0 || photo.size > 5 * 1024 * 1024) return null;
 
-          const ext = photo.name.split(".").pop()?.toLowerCase();
-          const filename =
-            ext === "heic" || ext === "heif"
-              ? photo.name.replace(/\.[^/.]+$/, ".jpg")
-              : photo.name;
+        // Nettoyage du nom de fichier
+        let name = photo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
-          // Si le type MIME n’est pas image, force image/jpeg
-          const mimeType =
-            photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
+        const ext = name.split(".").pop()?.toLowerCase();
+        // Forcer extension jpg pour HEIC/HEIF ou fichiers sans extension valide
+        const validExtensions = ["jpg", "jpeg", "png", "gif"];
+        if (!ext || !validExtensions.includes(ext)) {
+          name = name.replace(/\.[^/.]+$/, "") + ".jpg";
+        }
 
-          let buffer;
-          try {
-            buffer = Buffer.from(await photo.arrayBuffer());
-          } catch {
-            return null;
-          }
+        const mimeType =
+          photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
 
-          return {
-            filename,
-            content: buffer,
-            contentType: mimeType
-          };
-        })
-    );
+        const buffer = Buffer.from(await photo.arrayBuffer());
 
-    const filteredAttachments = attachments.filter(Boolean);
+        return { filename: name, content: buffer, contentType: mimeType };
+      } catch {
+        return null; // jamais planter
+      }
+    })
+);
 
+const filteredAttachments = attachments.filter(Boolean);
+    
     // --- Email au plombier ---
     await transporter.sendMail({
       from: `"French Plomberie" <${process.env.SMTP_USER}>`,
