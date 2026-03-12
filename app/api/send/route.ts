@@ -119,7 +119,7 @@ ${mapLink ? "Localisation : " + mapLink : ""}
 
         text: `
 
-Bonjour ${prenom},
+Bonjour ${prenom} ${nom},
 
 Nous avons bien reçu votre demande.
 
