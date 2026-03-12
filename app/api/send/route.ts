@@ -25,6 +25,36 @@ export async function POST(req: Request) {
       mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
     }
 
+        // --- Gestion des photos ---
+    const photos = formData.getAll("photos") as File[];
+    const attachments = await Promise.all(
+      photos.slice(0, 3).map(async (photo) => {
+        if (!photo || photo.size === 0 || photo.size > 5 * 1024 * 1024) return null;
+
+        const ext = photo.name.split(".").pop()?.toLowerCase();
+        const filename =
+          ext === "heic" || ext === "heif"
+            ? photo.name.replace(/\.[^/.]+$/, ".jpg")
+            : photo.name;
+
+        let buffer;
+        try {
+          buffer = Buffer.from(await photo.arrayBuffer());
+          // compression
+          buffer = await sharp(buffer)
+            .jpeg({ quality: 80 })
+            .toBuffer();
+        } catch (err) {
+          console.warn("Erreur conversion photo :", photo.name, err);
+          return null;
+        }
+
+        return { filename, content: buffer, contentType: "image/jpeg" };
+      })
+    );
+
+    const filteredAttachments = attachments.filter(Boolean);
+    
     // SMTP
     const transporter = nodemailer.createTransport({
 
