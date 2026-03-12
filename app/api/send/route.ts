@@ -33,37 +33,34 @@ export async function POST(req: Request) {
       }
     });
 
-   // Traitement photos de manière sûre
-const attachments = await Promise.all(
-  photos
-    .slice(0, 3) // limiter à 3 photos max
-    .map(async (photo) => {
-      try {
-        if (!photo || photo.size === 0 || photo.size > 5 * 1024 * 1024) return null;
+// Traitement photos sécurisé, pas de sharp
+const attachments: { filename: string; content: Buffer; contentType: string }[] = [];
 
-        // Nettoyage du nom de fichier
-        let name = photo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+for (const photo of photos.slice(0, 3)) {
+  try {
+    // ignore fichiers vides ou >5Mo
+    if (!photo || photo.size === 0 || photo.size > 5 * 1024 * 1024) continue;
 
-        const ext = name.split(".").pop()?.toLowerCase();
-        // Forcer extension jpg pour HEIC/HEIF ou fichiers sans extension valide
-        const validExtensions = ["jpg", "jpeg", "png", "gif"];
-        if (!ext || !validExtensions.includes(ext)) {
-          name = name.replace(/\.[^/.]+$/, "") + ".jpg";
-        }
+    // Détermination type mime valide
+    const mimeType = photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
 
-        const mimeType =
-          photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
+    // Nom de fichier safe
+    let name = photo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
 
-        const buffer = Buffer.from(await photo.arrayBuffer());
+    // Forcer .jpg si type inconnu
+    if (!["image/jpeg", "image/png", "image/gif"].includes(mimeType)) {
+      name = name.replace(/\.[^/.]+$/, "") + ".jpg";
+    }
 
-        return { filename: name, content: buffer, contentType: mimeType };
-      } catch {
-        return null; // jamais planter
-      }
-    })
-);
+    // Buffer du fichier
+    const buffer = Buffer.from(await photo.arrayBuffer());
 
-const filteredAttachments = attachments.filter(Boolean);
+    attachments.push({ filename: name, content: buffer, contentType: mimeType });
+  } catch (err) {
+    console.warn("Fichier ignoré, erreur :", photo.name, err);
+    continue; // ne jamais planter
+  }
+}
     
     // --- Email au plombier ---
     await transporter.sendMail({
