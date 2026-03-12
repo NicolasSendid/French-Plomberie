@@ -48,12 +48,12 @@ export async function POST(req: Request) {
 
     const filtered = attachments.filter(Boolean);
 
+    // EMAIL PLOMBIER
+
     await transporter.sendMail({
 
       from: `"French Plomberie" <${process.env.SMTP_USER}>`,
-
       to: "frenchplomberie@gmail.com",
-
       subject: "🚰 Nouvelle demande plomberie",
 
       text: `
@@ -73,6 +73,26 @@ ${message}
 
     });
 
+    // ENVOI GOOGLE SHEETS
+
+    await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", {
+
+      method: "POST",
+
+      body: JSON.stringify({
+
+        prenom,
+        nom,
+        tel,
+        email,
+        adresse,
+        prestation,
+        message
+
+      })
+
+    });
+
     return Response.json({ success: true });
 
   } catch (error) {
@@ -85,4 +105,5 @@ ${message}
     );
 
   }
+
 }
