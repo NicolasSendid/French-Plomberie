@@ -124,7 +124,7 @@ Message: ${message}`;
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
-      <h1 style={{ textAlign: "center" }}>Plombier disponible rapidement</h1>
+      <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
 
       <p style={{ textAlign: "center", color: "#555" }}>
         Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain
@@ -215,7 +215,7 @@ Message: ${message}`;
         <div style={{ marginTop: 15, fontSize: 14 }}>
           <label>
             <input type="checkbox" name="rgpd" required />
-            Je confirme accepter le traitement de mes données
+            J'autorise French Plomberie à traiter mes données personnelles afin de répondre à ma demande d'intervention, conformément à la réglementation RGPD.
           </label>
         </div>
 
