@@ -33,32 +33,28 @@ export async function POST(req: Request) {
       }
     });
 
-// Traitement photos sécurisé, pas de sharp
+// TRAITEMENT PHOTOS ROBUSTE
 const attachments: { filename: string; content: Buffer; contentType: string }[] = [];
 
-for (const photo of photos.slice(0, 3)) {
+for (const photo of photos.slice(0, 3)) { // max 3 fichiers
   try {
-    // ignore fichiers vides ou >5Mo
     if (!photo || photo.size === 0 || photo.size > 5 * 1024 * 1024) continue;
 
-    // Détermination type mime valide
-    const mimeType = photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
+    let mimeType = photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
+    let name = photo.name ? photo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_") : `photo_${Date.now()}.jpg`;
 
-    // Nom de fichier safe
-    let name = photo.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-
-    // Forcer .jpg si type inconnu
-    if (!["image/jpeg", "image/png", "image/gif"].includes(mimeType)) {
-      name = name.replace(/\.[^/.]+$/, "") + ".jpg";
+    // Essayer de lire le fichier, sinon ignorer
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(await photo.arrayBuffer());
+    } catch (err) {
+      console.warn("Impossible de lire la photo, ignorée :", photo.name, err);
+      continue;
     }
-
-    // Buffer du fichier
-    const buffer = Buffer.from(await photo.arrayBuffer());
 
     attachments.push({ filename: name, content: buffer, contentType: mimeType });
   } catch (err) {
-    console.warn("Fichier ignoré, erreur :", photo.name, err);
-    continue; // ne jamais planter
+    console.warn("Erreur inattendue photo :", photo.name, err);
   }
 }
     
