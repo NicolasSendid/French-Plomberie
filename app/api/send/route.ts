@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer";
-import sharp from "sharp";
 
 export async function POST(req: Request) {
 
