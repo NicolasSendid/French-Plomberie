@@ -1,31 +1,25 @@
 import nodemailer from "nodemailer";
+import fetch from "node-fetch";
+import sharp from "sharp";
 
-export async function POST(req: Request) {
-
+export async function POST(req: Request): Promise<Response> {
   try {
-
     const formData = await req.formData();
 
-    const prenom = formData.get("prenom") as string;
-    const nom = formData.get("nom") as string;
-    const tel = formData.get("tel") as string;
-    const email = formData.get("email") as string;
-    const adresse = formData.get("adresse") as string;
-    const prestation = formData.get("prestation") as string;
-    const message = formData.get("message") as string;
+    const prenom = (formData.get("prenom") as string) || "";
+    const nom = (formData.get("nom") as string) || "";
+    const tel = (formData.get("tel") as string) || "";
+    const email = (formData.get("email") as string) || "";
+    const adresse = (formData.get("adresse") as string) || "";
+    const prestation = (formData.get("prestation") as string) || "";
+    const message = (formData.get("message") as string) || "";
+    const rgpd = (formData.get("rgpd") as string) === "on";
+    const latitude = (formData.get("latitude") as string) || "";
+    const longitude = (formData.get("longitude") as string) || "";
 
-    const latitude = formData.get("latitude") as string;
-    const longitude = formData.get("longitude") as string;
+    const mapLink = latitude && longitude ? `https://www.google.com/maps?q=${latitude},${longitude}` : "";
 
-    const photos = formData.getAll("photos") as File[];
-
-    // Lien Google Maps si localisation
-    let mapLink = "";
-    if (latitude && longitude) {
-      mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-    }
-
-        // --- Gestion des photos ---
+    // --- Gestion des photos ---
     const photos = formData.getAll("photos") as File[];
     const attachments = await Promise.all(
       photos.slice(0, 3).map(async (photo) => {
@@ -54,142 +48,58 @@ export async function POST(req: Request) {
     );
 
     const filteredAttachments = attachments.filter(Boolean);
-    
-    // SMTP
+
+    // --- Envoi mail plombier ---
     const transporter = nodemailer.createTransport({
-
       host: process.env.SMTP_HOST,
-      port: 587,
+      port: Number(process.env.SMTP_PORT) || 587,
       secure: false,
-
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      }
-
+        pass: process.env.SMTP_PASS,
+      },
     });
 
-    // Traitement photos
-    const allowedTypes = [
-      "image/jpeg",
-      "image/jpg",
-      "image/png",
-      "image/webp",
-      "image/heic",
-      "image/heif"
-    ];
-
-    const attachments = await Promise.all(
-
-      photos.slice(0,3).map(async (photo) => {
-
-        if (!photo || photo.size === 0) return null;
-
-        if (photo.size > 8 * 1024 * 1024) {
-          console.log("Photo trop lourde ignorée");
-          return null;
-        }
-
-        let mimeType = photo.type;
-
-        if (!allowedTypes.includes(mimeType)) {
-          mimeType = "image/jpeg";
-        }
-
-        let filename = photo.name;
-
-        const ext = filename.split(".").pop()?.toLowerCase();
-
-        if (ext === "heic" || ext === "heif") {
-          filename = filename.replace(/\.[^/.]+$/, ".jpg");
-          mimeType = "image/jpeg";
-        }
-
-        const buffer = Buffer.from(await photo.arrayBuffer());
-
-        return {
-          filename,
-          content: buffer,
-          contentType: mimeType
-        };
-
-      })
-
-    );
-
-    const filteredAttachments = attachments.filter(Boolean);
-    // EMAIL AU PLOMBIER
-
     await transporter.sendMail({
-
       from: `"French Plomberie" <${process.env.SMTP_USER}>`,
-
       to: "frenchplomberie@gmail.com",
-
       subject: "🚰 Nouvelle demande plomberie",
-
       text: `
-
 Nouvelle demande client
 
 Nom : ${prenom} ${nom}
 Téléphone : ${tel}
 Email : ${email}
-
 Adresse : ${adresse}
-
 Prestation : ${prestation}
-
 Message :
 ${message}
-
 ${mapLink ? "Localisation : " + mapLink : ""}
-
       `,
-
-      attachments: filteredAttachments
-
+      attachments: filteredAttachments,
     });
 
-    // EMAIL CLIENT
-
+    // --- Accusé réception client ---
     if (email) {
-
       await transporter.sendMail({
-
         from: `"French Plomberie" <${process.env.SMTP_USER}>`,
-
         to: email,
-
         subject: "Votre demande plomberie a bien été reçue",
-
         text: `
+Bonjour ${prenom} ${nom},
 
-Bonjour ${prenom},
+Merci pour votre demande.
 
-Nous avons bien reçu votre demande.
+Nous avons bien reçu votre message concernant :
 
-Récapitulatif :
-
-Nom : ${prenom} ${nom}
-Téléphone : ${tel}
-Adresse : ${adresse}
-
-Prestation demandée :
 ${prestation}
-
-Message :
-${message}
 
 Notre équipe va vous recontacter rapidement.
 
 French Plomberie
 📞 06 58 90 86 74
-
-        `
-
+        `,
       });
-
     }
 
     // GOOGLE SHEETS
