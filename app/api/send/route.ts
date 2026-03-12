@@ -1,9 +1,7 @@
 import nodemailer from "nodemailer";
 
 export async function POST(req: Request) {
-
   try {
-
     const formData = await req.formData();
 
     const prenom = formData.get("prenom") as string;
@@ -13,7 +11,6 @@ export async function POST(req: Request) {
     const adresse = formData.get("adresse") as string;
     const prestation = formData.get("prestation") as string;
     const message = formData.get("message") as string;
-
     const latitude = formData.get("latitude") as string;
     const longitude = formData.get("longitude") as string;
 
@@ -27,101 +24,78 @@ export async function POST(req: Request) {
 
     // SMTP
     const transporter = nodemailer.createTransport({
-
       host: process.env.SMTP_HOST,
       port: 587,
       secure: false,
-
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS
       }
-
     });
 
-    // --- Traitement des photos avec HEIC → JPG et compression ---
+    // Traitement photos de manière sûre
     const attachments = await Promise.all(
-      photos.slice(0, 3).map(async (photo) => {
-        if (!photo || photo.size === 0 || photo.size > 10 * 1024 * 1024) return null; // ignore >10Mo
+      photos
+        .slice(0, 3) // limiter à 3 photos max
+        .map(async (photo) => {
+          if (!photo || photo.size === 0) return null;
+          if (photo.size > 5 * 1024 * 1024) return null; // ignore >5Mo
 
-        let buffer = Buffer.from(await photo.arrayBuffer());
-        const ext = photo.name.split(".").pop()?.toLowerCase();
-        let filename = photo.name;
+          const ext = photo.name.split(".").pop()?.toLowerCase();
+          const filename =
+            ext === "heic" || ext === "heif"
+              ? photo.name.replace(/\.[^/.]+$/, ".jpg")
+              : photo.name;
 
-        // Convertir HEIC/HEIF en JPG
-        if (ext === "heic" || ext === "heif") {
-          filename = photo.name.replace(/\.[^/.]+$/, ".jpg");
-        }
+          // Si le type MIME n’est pas image, force image/jpeg
+          const mimeType =
+            photo.type && photo.type.startsWith("image/") ? photo.type : "image/jpeg";
 
-        // Compression + conversion JPG
-        try {
-          buffer = await sharp(buffer)
-            .resize({ width: 2000, withoutEnlargement: true })
-            .jpeg({ quality: 80 })
-            .toBuffer();
-        } catch (err) {
-          console.warn("Erreur conversion photo :", photo.name, err);
-          return null;
-        }
+          let buffer;
+          try {
+            buffer = Buffer.from(await photo.arrayBuffer());
+          } catch {
+            return null;
+          }
 
-        return {
-          filename,
-          content: buffer,
-          contentType: "image/jpeg"
-        };
-      })
+          return {
+            filename,
+            content: buffer,
+            contentType: mimeType
+          };
+        })
     );
 
     const filteredAttachments = attachments.filter(Boolean);
 
-    // EMAIL AU PLOMBIER
-
+    // --- Email au plombier ---
     await transporter.sendMail({
-
       from: `"French Plomberie" <${process.env.SMTP_USER}>`,
-
       to: "frenchplomberie@gmail.com",
-
       subject: "🚰 Nouvelle demande plomberie",
-
       text: `
-
 Nouvelle demande client
 
 Nom : ${prenom} ${nom}
 Téléphone : ${tel}
 Email : ${email}
-
 Adresse : ${adresse}
-
 Prestation : ${prestation}
-
 Message :
 ${message}
-
 ${mapLink ? "Localisation : " + mapLink : ""}
-
       `,
-
       attachments: filteredAttachments
-
     });
 
-    // EMAIL CLIENT
-
+    // --- Accusé réception client ---
     if (email) {
-
       await transporter.sendMail({
-
         from: `"French Plomberie" <${process.env.SMTP_USER}>`,
-
         to: email,
-
         subject: "Votre demande plomberie a bien été reçue",
-
         text: `
-
-Bonjour ${prenom},
+Bonjour ${prenom} ${nom},
 
 Nous avons bien reçu votre demande.
 
@@ -141,45 +115,31 @@ Notre équipe va vous recontacter rapidement.
 
 French Plomberie
 📞 06 58 90 86 74
-
         `
-
       });
-
     }
 
-    // GOOGLE SHEETS
-
-    await fetch("https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec", {
-
-      method: "POST",
-
-      body: JSON.stringify({
-
-        prenom,
-        nom,
-        tel,
-        email,
-        adresse,
-        prestation,
-        message,
-        mapLink
-
-      })
-
-    });
-
-    return Response.json({ success: true });
-
-  } catch (error) {
-
-    console.error("Erreur API :", error);
-
-    return Response.json(
-      { success: false },
-      { status: 500 }
+    // --- Google Sheets ---
+    await fetch(
+      "https://script.google.com/macros/s/AKfycbz24q3b1w7B_mi4NysPDlkqim8XGjXRGqFtrm1_ay8wfad8tCE4kcMG544D8-VMEIYoyg/exec",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          prenom,
+          nom,
+          tel,
+          email,
+          adresse,
+          prestation,
+          message,
+          mapLink
+        })
+      }
     );
 
+    return Response.json({ success: true });
+  } catch (error) {
+    console.error("Erreur API :", error);
+    return Response.json({ success: false }, { status: 500 });
   }
-
 }
