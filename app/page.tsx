@@ -252,8 +252,8 @@ export default function Home() {
   Directeur de publication : French Plomberie - Aurélein Ballet<br />
   Hébergement : Vercel<br /><br />
 
-  Les informations recueillies via ce formulaire sont utilisées uniqueme
-  pour le traitement de votre demande conformément au RGPD.
+  Les informations recueillies via ce formulaire sont utilisées uniquemement
+  pour le traitement de votre demande d'intervention ou de devis conformément au RGPD.
 </footer>
   </div>
   );
