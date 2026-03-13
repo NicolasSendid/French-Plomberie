@@ -229,7 +229,32 @@ export default function Home() {
           Installer l'application
         </button>
       )}
-      
+
+      <footer
+  style={{
+    marginTop: 60,
+    paddingTop: 20,
+    borderTop: "1px solid #ddd",
+    fontSize: 12,
+    color: "#666",
+    lineHeight: 1.6,
+    textAlign: "center"
+  }}
+>
+  <strong>Mentions légales</strong><br />
+
+  French Plomberie - Aurélien Ballet<br />
+  SIRET : 51368594100025<br />
+  Adresse : 9 RUE MEURGE ETAGE 0, 60570 ANDEVILLE<br />
+  Téléphone : 06 58 90 86 74<br />
+  Email : frenchplomberie@gmail.com<br /><br />
+
+  Directeur de publication : French Plomberie - Aurélein Ballet<br />
+  Hébergement : Vercel<br /><br />
+
+  Les informations recueillies via ce formulaire sont utilisées uniqueme
+  pour le traitement de votre demande conformément au RGPD.
+</footer>
   </div>
   );
 }
