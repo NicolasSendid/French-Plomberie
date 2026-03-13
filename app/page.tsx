@@ -252,4 +252,6 @@ export default function Home() {
         en nous contactant par email.
       </div>
   </div>
+  );
+}
     
