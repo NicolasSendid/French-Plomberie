@@ -251,5 +251,5 @@ export default function Home() {
         Conformément au RGPD, vous pouvez demander la suppression de vos données
         en nous contactant par email.
       </div>
-  );
-}
+  </div>
+    
