@@ -229,9 +229,8 @@ export default function Home() {
           Installer l'application
         </button>
       )}
-    </div>
-    
-          <div style={{ marginTop: 50, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
+   
+      <div style={{ marginTop: 50, fontSize: 12, color: "#666", lineHeight: 1.6 }}>
         <hr style={{ marginBottom: 20 }} />
 
         <strong>Mentions légales</strong><br />
