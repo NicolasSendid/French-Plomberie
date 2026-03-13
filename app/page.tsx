@@ -249,7 +249,7 @@ export default function Home() {
   Téléphone : 06 58 90 86 74<br />
   Email : frenchplomberie@gmail.com<br /><br />
 
-  Directeur de publication : French Plomberie - Aurélein Ballet<br />
+  Directeur de publication : French Plomberie - Aurélien Ballet<br />
   Hébergement : Vercel<br /><br />
 
   Les informations recueillies via ce formulaire sont utilisées uniquemement
