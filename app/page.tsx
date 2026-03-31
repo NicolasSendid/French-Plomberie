@@ -28,26 +28,6 @@ export default function Home() {
     await deferredPrompt.userChoice;
   };
 
-  // 🔗 PARTAGE
-  const handleShare = async () => {
-    const shareData = {
-      title: "French Plomberie",
-      text: "Besoin d’un plombier rapidement ?",
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(shareData.url);
-        alert("Lien copié 👍");
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   // Géolocalisation
   const getLocation = () => {
     navigator.geolocation.getCurrentPosition(
@@ -56,7 +36,7 @@ export default function Home() {
     );
   };
 
-  // Compression images
+  // Compression des images côté client
   const compressImage = (file: File, maxWidth = 1920, quality = 0.8): Promise<File> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -68,24 +48,34 @@ export default function Home() {
           canvas.width = img.width * scale;
           canvas.height = img.height * scale;
           const ctx = canvas.getContext("2d");
-          if (!ctx) return reject("Erreur canvas");
+          if (!ctx) return reject("Impossible de récupérer le contexte canvas");
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           canvas.toBlob(
             (blob) => {
               if (blob) {
-                resolve(new File([blob], file.name, { type: "image/jpeg" }));
-              } else reject("Erreur compression");
+                const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                  type: "image/jpeg",
+                  lastModified: Date.now(),
+                });
+                resolve(newFile);
+              } else {
+                reject("Erreur conversion image");
+              }
             },
             "image/jpeg",
             quality
           );
         };
-        if (event.target?.result) img.src = event.target.result as string;
+        if (event.target?.result) {
+          img.src = event.target.result as string;
+        }
       };
+      reader.onerror = (err) => reject(err);
       reader.readAsDataURL(file);
     });
   };
 
+  // Gestion des photos (limite 3, compression)
   const handlePhotos = async (e: any) => {
     const files = Array.from(e.target.files).slice(0, 3);
     const compressedFiles: File[] = [];
@@ -94,14 +84,16 @@ export default function Home() {
       try {
         const compressed = await compressImage(file);
         compressedFiles.push(compressed);
-      } catch {
-        compressedFiles.push(file);
+      } catch (err) {
+        console.warn("Impossible de compresser l'image :", file.name, err);
+        compressedFiles.push(file); // ajoute brute si compression échoue
       }
     }
 
     setPhotos(compressedFiles);
   };
 
+  // Envoi formulaire
   const handleSubmit = async (e: any) => {
     e.preventDefault();
     if (!prestation) {
@@ -111,12 +103,11 @@ export default function Home() {
 
     const formData = new FormData(e.target);
     formData.append("prestation", prestation);
-
     if (location) {
       formData.append("latitude", location.lat.toString());
       formData.append("longitude", location.lng.toString());
     }
-
+    formData.append("photosCount", photos.length.toString());
     photos.forEach((photo) => formData.append("photos", photo));
 
     try {
@@ -124,7 +115,6 @@ export default function Home() {
 
       if (response.ok) {
         setStatus("✅ Demande envoyée !");
-
         const prenom = formData.get("prenom");
         const nom = formData.get("nom");
         const tel = formData.get("tel");
@@ -132,7 +122,7 @@ export default function Home() {
         const message = formData.get("message");
 
         window.open(
-          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${prenom} ${nom}\nTel: ${tel}\nAdresse: ${adresse}\nPrestation: ${prestation}\nMessage: ${message}`,
+          `https://wa.me/33658908674?text=Nouvelle demande\nNom: ${prenom} ${nom}\nTel: ${tel}\nAdresse: ${adresse}\nPrestation: ${prestation}\nMessage: ${message}\nPhotos: ${photos.length}`,
           "_blank"
         );
 
@@ -147,66 +137,75 @@ export default function Home() {
       } else {
         setStatus("❌ Erreur lors de l'envoi");
       }
-    } catch {
+    } catch (err) {
+      console.error(err);
       setStatus("❌ Impossible d'envoyer la demande");
     }
   };
 
   return (
     <div style={{ maxWidth: 700, margin: "auto", padding: 30, fontFamily: "Arial" }}>
-      
-      {/* HEADER LOGO + PARTAGE */}
-      <div style={{ textAlign: "center", position: "relative" }}>
-        
-        <button
-          onClick={handleShare}
-          style={{
-            position: "absolute",
-            right: 0,
-            top: 0,
-            background: "transparent",
-            border: "none",
-            fontSize: 20,
-            cursor: "pointer",
-            opacity: 0.6
-          }}
-          title="Partager"
-        >
-          🔗
-        </button>
-
+      <div style={{ textAlign: "center" }}>
         <img src="/logo.png" style={{ width: 140 }} />
       </div>
 
       <h1 style={{ textAlign: "center" }}>Artisan Plombier de proximité</h1>
+      <p style={{ textAlign: "center", color: "#555" }}>Dépannage • Chauffage / Ballon d'eau chaude • Cuisine • Salle de bain</p>
 
       <form onSubmit={handleSubmit} style={{ background: "#f9f9f9", padding: 25, borderRadius: 10 }}>
-
+        <h2>Vos informations</h2>
         <input name="prenom" placeholder="Prénom" required />
         <input name="nom" placeholder="Nom" required />
         <input name="tel" placeholder="Téléphone" required />
         <input name="email" placeholder="Email" />
-        <input name="adresse" placeholder="Adresse" required />
+        <input name="adresse" placeholder="Adresse intervention" required />
 
-        <h3>Prestation</h3>
+        <h3 style={{ marginTop: 20 }}>Prestation</h3>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          <button type="button" onClick={() => setPrestation("Dépannage fuite")} style={{ padding: 15, borderRadius: 8, border: prestation === "Dépannage fuite" ? "2px solid #0070f3" : "1px solid #ccc" }}>🔧 Dépannage fuite</button>
+          <button type="button" onClick={() => setPrestation("Chauffage / Ballon ECS")} style={{ padding: 15, borderRadius: 8, border: prestation === "Chauffage / Ballon ECS" ? "2px solid #0070f3" : "1px solid #ccc" }}>🔥 Chauffage / Ballon ECS</button>
+          <button type="button" onClick={() => setPrestation("Cuisine")} style={{ padding: 15, borderRadius: 8, border: prestation === "Cuisine" ? "2px solid #0070f3" : "1px solid #ccc" }}>🍳 Cuisine</button>
+          <button type="button" onClick={() => setPrestation("Salle de bain")} style={{ padding: 15, borderRadius: 8, border: prestation === "Salle de bain" ? "2px solid #0070f3" : "1px solid #ccc" }}>🛁 Salle de bain</button>
+        </div>
 
-        <button type="button" onClick={() => setPrestation("Dépannage fuite")}>🔧 Dépannage</button>
-        <button type="button" onClick={() => setPrestation("Chauffage")}>🔥 Chauffage</button>
-        <button type="button" onClick={() => setPrestation("Cuisine")}>🍳 Cuisine</button>
-        <button type="button" onClick={() => setPrestation("Salle de bain")}>🛁 Salle de bain</button>
+        <h3 style={{ marginTop: 20 }}>Photos du problème (max 3)</h3>
+        <input type="file" multiple accept="image/*" onChange={handlePhotos} />
+        {photos.length > 0 && (
+          <div style={{ display: "flex", gap: 10, marginTop: 10 }}>
+            {photos.map((photo, i) => (
+              <img key={i} src={URL.createObjectURL(photo)} style={{ width: 70, height: 70, objectFit: "cover", borderRadius: 6 }} />
+            ))}
+          </div>
+        )}
 
-        <h3>Photos</h3>
-        <input type="file" multiple onChange={handlePhotos} />
+        <button type="button" onClick={getLocation} style={{ marginTop: 15, padding: 10, background: "#eee", border: "none", borderRadius: 6 }}>📍 Ajouter ma position</button>
+        {location && <p style={{ fontSize: 13, color: "#666" }}>Position enregistrée</p>}
 
-        <button type="button" onClick={getLocation}>📍 Ajouter position</button>
+        <textarea name="message" placeholder="Décrivez votre problème" style={{ width: "100%", marginTop: 20, padding: 10, borderRadius: 6 }} />
 
-        <textarea name="message" placeholder="Votre message" />
+        {/* RGPD */}
+        <div style={{ marginTop: 15, fontSize: 14 }}>
+          <label>
+            <input type="checkbox" name="rgpd" required style={{ marginRight: 8 }} />
+            Je confirme avoir lu et accepté que mes données soient utilisées pour le traitement de ma demande conformément à la réglementation RGPD.
+          </label>
+        </div>
 
-        <button type="submit">Envoyer</button>
-
+        <button type="submit" style={{ marginTop: 25, width: "100%", padding: 14, background: "black", color: "white", border: "none", borderRadius: 6 }}>Envoyer la demande</button>
       </form>
 
-      <p>{status}</p>
+      <p style={{ textAlign: "center", marginTop: 20 }}>{status}</p>
+
+      {history.length > 0 && (
+        <div style={{ marginTop: 40 }}>
+          <h3>Historique des demandes</h3>
+          {history.map((h, i) => (
+            <div key={i} style={{ padding: 10, borderBottom: "1px solid #ddd" }}>
+              {h.date} — {h.prestation}
+            </div>
+          ))}
+        </div>
+      )}
 
       <a href="tel:0658908674" style={{
         position: "fixed",
@@ -220,9 +219,42 @@ export default function Home() {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontSize: 28
+        fontSize: 28,
+        textDecoration: "none",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.3)"
       }}>📞</a>
 
-    </div>
+      {showInstall && (
+        <button onClick={installApp} style={{ position: "fixed", bottom: 100, right: 25, padding: 10, borderRadius: 8, background: "#0070f3", color: "#fff" }}>
+          Installer l'application
+        </button>
+      )}
+
+      <footer
+  style={{
+    marginTop: 60,
+    paddingTop: 20,
+    borderTop: "1px solid #ddd",
+    fontSize: 12,
+    color: "#666",
+    lineHeight: 1.6,
+    textAlign: "center"
+  }}
+>
+  <strong>Mentions légales</strong><br />
+
+  French Plomberie - Aurélien Ballet<br />
+  SIRET : 51368594100025<br />
+  Adresse : 9 RUE MEURGE ETAGE 0, 60570 ANDEVILLE<br />
+  Téléphone : 06 58 90 86 74<br />
+  Email : frenchplomberie@gmail.com<br /><br />
+
+  Directeur de publication : French Plomberie - Aurélien Ballet<br />
+  Hébergement : Vercel<br /><br />
+
+  Les informations recueillies via ce formulaire sont utilisées uniquemement
+  pour le traitement de votre demande d'intervention ou de devis conformément au RGPD.
+</footer>
+  </div>
   );
 }
